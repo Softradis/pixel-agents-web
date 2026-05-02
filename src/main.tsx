@@ -158,40 +158,46 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     stage.addChild(floor);
 
     // Suelo/caminos: alfombras Kenney, no badges flotantes.
-    addIsoAsset(stage, 'floorCarpet_N.png', cx - 218, cy + 34, 0.54, 0.96);
-    addIsoAsset(stage, 'floorCarpet_N.png', cx - 86, cy + 6, 0.54, 0.96);
-    addIsoAsset(stage, 'floorCarpet_S.png', cx + 52, cy + 30, 0.56, 0.96);
-    addIsoAsset(stage, 'floorCarpet_S.png', cx + 170, cy + 66, 0.5, 0.94);
-    addIsoAsset(stage, 'floorCarpetEnd_W.png', cx + 250, cy + 94, 0.46, 0.93);
-    addIsoAsset(stage, 'floorCarpetSmall_N.png', cx - 10, cy + 104, 0.5, 0.92);
+    addIsoAsset(stage, 'floorCarpet_N.png', cx - 220, cy + 70, 0.5, 0.96);
+    addIsoAsset(stage, 'floorCarpet_N.png', cx - 110, cy + 42, 0.5, 0.96);
+    addIsoAsset(stage, 'floorCarpet_S.png', cx + 30, cy + 58, 0.58, 0.96);
+    addIsoAsset(stage, 'floorCarpet_S.png', cx + 154, cy + 72, 0.5, 0.94);
+    addIsoAsset(stage, 'floorCarpetEnd_W.png', cx + 238, cy + 86, 0.42, 0.93);
+    addIsoAsset(stage, 'floorCarpetSmall_N.png', cx + 22, cy + 112, 0.5, 0.92);
 
     // Paredes del pack canónico: wallBooks/wallDoorway sustituyen la pared dibujada.
-    addIsoAsset(stage, 'wallBooks_N.png', cx - 238, cy - 92, 0.7);
-    addIsoAsset(stage, 'wallBooks_N.png', cx - 92, cy - 126, 0.7);
-    addIsoAsset(stage, 'wallDoorway_N.png', cx + 54, cy - 126, 0.7);
-    addIsoAsset(stage, 'wallBooks_N.png', cx + 190, cy - 92, 0.7);
-    addIsoAsset(stage, 'wallBooks_E.png', cx + 272, cy - 12, 0.68);
-    addIsoAsset(stage, 'wallDoorway_E.png', cx + 232, cy + 72, 0.68);
-    addIsoAsset(stage, 'wallBooks_W.png', cx - 330, cy - 2, 0.64);
+    addIsoAsset(stage, 'wallBooks_N.png', cx - 242, cy - 92, 0.68);
+    addIsoAsset(stage, 'wallBooks_N.png', cx - 104, cy - 126, 0.68);
+    addIsoAsset(stage, 'wallDoorway_N.png', cx + 34, cy - 128, 0.7);
+    addIsoAsset(stage, 'wallBooks_N.png', cx + 174, cy - 96, 0.68);
+    addIsoAsset(stage, 'wallBooks_E.png', cx + 270, cy - 8, 0.66);
+    addIsoAsset(stage, 'wallDoorway_E.png', cx + 230, cy + 72, 0.66);
+    addIsoAsset(stage, 'wallBooks_W.png', cx - 328, cy + 4, 0.62);
 
     // Biblioteca/mobiliario pegado a paredes y mesas reales.
-    addIsoAsset(stage, 'bookcaseWideBooks_N.png', cx - 236, cy - 58, 0.5);
-    addIsoAsset(stage, 'bookcaseWideBooks_E.png', cx + 270, cy + 28, 0.48);
-    addIsoAsset(stage, 'bookcaseBooksLadder_N.png', cx - 12, cy - 72, 0.46);
-    addIsoAsset(stage, 'candleStandDouble_N.png', cx + 150, cy - 58, 0.42);
+    addIsoAsset(stage, 'bookcaseWideBooks_N.png', cx - 246, cy - 48, 0.48);
+    addIsoAsset(stage, 'bookcaseBooksLadder_N.png', cx - 66, cy - 66, 0.42);
+    addIsoAsset(stage, 'candleStandDouble_N.png', cx + 128, cy - 48, 0.38);
+    addIsoAsset(stage, 'bookcaseWideBooks_E.png', cx + 266, cy + 30, 0.46);
 
     const positions: Record<Owner, { x: number; y: number }> = {
-      entrada: { x: cx - 236, y: cy + 66 },
-      vera: { x: cx - 112, y: cy + 12 },
-      cris: { x: cx + 76, y: cy + 14 },
-      decision: { x: cx + 220, y: cy + 84 },
+      entrada: { x: cx - 252, y: cy + 92 },
+      vera: { x: cx - 142, y: cy + 52 },
+      cris: { x: cx + 34, y: cy + 62 },
+      decision: { x: cx + 210, y: cy + 42 },
+    };
+    const taskPositions: Record<Owner, { x: number; y: number }> = {
+      entrada: { x: positions.entrada.x - 12, y: positions.entrada.y + 30 },
+      vera: { x: positions.vera.x + 38, y: positions.vera.y + 4 },
+      cris: { x: positions.cris.x + 48, y: positions.cris.y + 2 },
+      decision: { x: positions.decision.x + 4, y: positions.decision.y + 42 },
     };
 
-    // Mobiliario real de cada zona.
-    addIsoAsset(stage, 'bookStand_N.png', positions.entrada.x, positions.entrada.y + 18, 0.46);
-    addIsoAsset(stage, 'longTableChairs_W.png', positions.vera.x, positions.vera.y + 24, 0.48);
-    addIsoAsset(stage, 'longTableDecoratedChairsBooks_N.png', positions.cris.x, positions.cris.y + 24, 0.48);
-    addIsoAsset(stage, 'displayCaseOpen_N.png', positions.decision.x, positions.decision.y + 20, 0.46);
+    // Mobiliario real de cada zona, colocado como flujo: entrada → Vera → Cris → decisiones.
+    addIsoAsset(stage, 'bookStand_N.png', positions.entrada.x, positions.entrada.y + 18, 0.42);
+    addIsoAsset(stage, 'longTableChairs_W.png', positions.vera.x, positions.vera.y + 26, 0.46);
+    addIsoAsset(stage, 'longTableDecoratedChairsBooks_N.png', positions.cris.x, positions.cris.y + 24, 0.5);
+    addIsoAsset(stage, 'displayCaseOpen_N.png', positions.decision.x, positions.decision.y + 32, 0.44);
 
     // Caminos sutiles: narrativa, no UI de dashboard.
     const paths = new Graphics();
@@ -218,10 +224,10 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
 
     // Etiquetas pequeñas integradas, solo para orientar.
     const smallLabels = [
-      ['Entrada', positions.entrada.x, positions.entrada.y - 46, 0xf4c542],
-      ['Vera', positions.vera.x, positions.vera.y - 52, 0x8dd7ff],
-      ['Cris', positions.cris.x, positions.cris.y - 52, 0xffca7a],
-      ['Decisiones', positions.decision.x, positions.decision.y - 46, 0xff5d5d],
+      ['Entrada', positions.entrada.x - 4, positions.entrada.y - 40, 0xf4c542],
+      ['Vera', positions.vera.x - 8, positions.vera.y - 48, 0x8dd7ff],
+      ['Cris', positions.cris.x + 8, positions.cris.y - 48, 0xffca7a],
+      ['Decisiones', positions.decision.x + 8, positions.decision.y - 38, 0xff5d5d],
     ] as const;
     smallLabels.forEach(([label, x, y, color]) => {
       const tag = new Graphics();
@@ -234,8 +240,8 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     });
 
     const agents = [
-      ['Vera', positions.vera.x - 10, positions.vera.y - 10, 0x2f9fd7, 0xffffff, 'vera'],
-      ['Cris', positions.cris.x + 10, positions.cris.y - 10, 0xb66a2c, 0xffe0b2, 'cris'],
+      ['Vera', positions.vera.x - 10, positions.vera.y - 8, 0x2f9fd7, 0xffffff, 'vera'],
+      ['Cris', positions.cris.x - 14, positions.cris.y - 8, 0xb66a2c, 0xffe0b2, 'cris'],
     ] as const;
     const agentBodies: { body: Container; active: boolean; baseY: number }[] = [];
     agents.forEach(([name, x, y, color, accent, owner]) => {
@@ -283,10 +289,10 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     const movingSprites: { card: Graphics; icon: Text; label: Text; from: { x: number; y: number }; to: { x: number; y: number }; started: number }[] = [];
 
     tasks.forEach((task, index) => {
-      const pos = positions[task.owner];
-      const slotX = (index % 3) * 24 - 24;
-      const slotY = Math.floor(index / 3) * 22;
-      const from = task.fromOwner ? positions[task.fromOwner] : pos;
+      const pos = taskPositions[task.owner];
+      const slotX = (index % 3) * 20 - 20;
+      const slotY = Math.floor(index / 3) * 18;
+      const from = task.fromOwner ? taskPositions[task.fromOwner] : pos;
       const x = (task.fromOwner ? from.x : pos.x) + slotX;
       const y = (task.fromOwner ? from.y : pos.y) + slotY;
       const meta = kindMeta[task.kind];
