@@ -2,7 +2,7 @@
 
 ## Estado
 
-MVP visual inicial en marcha.
+MVP visual inicial desplegado y evolucionando hacia oficina viva.
 
 ## Hecho
 
@@ -14,16 +14,21 @@ MVP visual inicial en marcha.
   - WhatsApp entrante en bandeja de entrada.
   - Bug técnico en mesa de Cris.
   - Tarea resuelta como tarjeta verde.
+- Timeline operativo visible.
+- Leyenda de estados.
+- Simulación automática de flujo WhatsApp.
+- Despliegue activo en Backuptools: `http://backuptools:4400/`.
+- Movimiento visual de tareas entre zonas.
+- Reacción simple de Vera/Cris mediante brillo y bounce.
+- Caminos visuales entre entrada, Vera, Cris y decisiones.
 
 ## Pendiente inmediato
 
-- Mejorar movimiento/transiciones entre zonas.
-- Añadir timeline operativo visible.
-- Desplegar en Backuptools cuando haya acceso SSH/ruta operativa.
+- Revisión de Cris con criterio de 30 segundos.
+- Ajustar lectura visual si el movimiento no se entiende suficiente.
+- Integrar assets Kenney Isometric Library después de validar el flujo vivo.
 
 ## Última verificación
-
-Ejecutar:
 
 ```bash
 npm run build

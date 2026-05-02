@@ -14,6 +14,8 @@ type OfficeTask = {
   status: TaskStatus;
   owner: Owner;
   detail: string;
+  fromOwner?: Owner;
+  reactingOwner?: Owner;
 };
 
 const colors: Record<TaskStatus, number> = {
@@ -103,21 +105,6 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
       stage.addChild(t);
     });
 
-    const agents = [
-      ['Vera', cx - 210, cy - 95, 0x8dd7ff],
-      ['Cris', cx + 40, cy - 95, 0xffca7a],
-    ] as const;
-    agents.forEach(([name, x, y, color]) => {
-      const body = new Graphics();
-      body.circle(x, y - 15, 16).fill(color);
-      body.roundRect(x - 20, y + 2, 40, 34, 10).fill(color).stroke({ width: 2, color: 0xffffff, alpha: 0.45 });
-      stage.addChild(body);
-      const nameText = new Text({ text: name, style: { fill: '#ffffff', fontSize: 13, fontWeight: '700' } });
-      nameText.anchor.set(0.5);
-      nameText.position.set(x, y + 55);
-      stage.addChild(nameText);
-    });
-
     const positions: Record<Owner, { x: number; y: number }> = {
       entrada: { x: cx - 85, y: cy + 55 },
       vera: { x: cx - 210, y: cy - 65 },
@@ -125,10 +112,46 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
       decision: { x: cx + 190, y: cy + 55 },
     };
 
+    const paths = new Graphics();
+    const pathPairs: [Owner, Owner][] = [['entrada', 'vera'], ['vera', 'cris'], ['cris', 'decision']];
+    pathPairs.forEach(([from, to]) => {
+      paths.moveTo(positions[from].x, positions[from].y);
+      paths.lineTo(positions[to].x, positions[to].y);
+    });
+    paths.stroke({ width: 4, color: 0x8fb5d9, alpha: 0.22 });
+    stage.addChild(paths);
+
+    const activeOwners = new Set(tasks.flatMap((task) => [task.reactingOwner, task.status === 'trabajando' ? task.owner : undefined]).filter(Boolean) as Owner[]);
+    const agents = [
+      ['Vera', positions.vera.x, positions.vera.y - 30, 0x8dd7ff, 'vera'],
+      ['Cris', positions.cris.x, positions.cris.y - 30, 0xffca7a, 'cris'],
+    ] as const;
+    const agentBodies: Graphics[] = [];
+    agents.forEach(([name, x, y, color, owner]) => {
+      const active = activeOwners.has(owner);
+      const glow = new Graphics();
+      glow.circle(x, y + 12, active ? 36 : 0).fill({ color, alpha: active ? 0.16 : 0 });
+      stage.addChild(glow);
+      const body = new Graphics();
+      body.circle(x, y - 15, 16).fill(color);
+      body.roundRect(x - 20, y + 2, 40, 34, 10).fill(color).stroke({ width: active ? 4 : 2, color: active ? 0xffffff : 0xffffff, alpha: active ? 0.8 : 0.45 });
+      stage.addChild(body);
+      agentBodies.push(body);
+      const nameText = new Text({ text: active ? `${name} · activo` : name, style: { fill: '#ffffff', fontSize: 13, fontWeight: '700' } });
+      nameText.anchor.set(0.5);
+      nameText.position.set(x, y + 55);
+      stage.addChild(nameText);
+    });
+
+    const movingSprites: { card: Graphics; icon: Text; from: { x: number; y: number }; to: { x: number; y: number }; started: number }[] = [];
+
     tasks.forEach((task, index) => {
       const pos = positions[task.owner];
-      const x = pos.x + (index % 3) * 34 - 34;
-      const y = pos.y + Math.floor(index / 3) * 32;
+      const slotX = (index % 3) * 34 - 34;
+      const slotY = Math.floor(index / 3) * 32;
+      const from = task.fromOwner ? positions[task.fromOwner] : pos;
+      const x = (task.fromOwner ? from.x : pos.x) + slotX;
+      const y = (task.fromOwner ? from.y : pos.y) + slotY;
       const card = new Graphics();
       card.roundRect(x - 42, y - 22, 84, 44, 10).fill(colors[task.status]).stroke({ width: selectedId === task.id ? 4 : 2, color: selectedId === task.id ? 0xffffff : 0x0b1220 });
       card.eventMode = 'static';
@@ -141,6 +164,24 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
       text.anchor.set(0.5);
       text.position.set(x, y - 2);
       stage.addChild(text);
+      if (task.fromOwner) {
+        movingSprites.push({ card, icon: text, from: { x, y }, to: { x: pos.x + slotX, y: pos.y + slotY }, started: performance.now() });
+      }
+    });
+
+    app.ticker.add(() => {
+      const t = performance.now();
+      agentBodies.forEach((body, idx) => {
+        body.y = Math.sin(t / 140 + idx) * 3;
+      });
+      movingSprites.forEach((sprite) => {
+        const progress = Math.min(1, (t - sprite.started) / 750);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const x = sprite.from.x + (sprite.to.x - sprite.from.x) * eased;
+        const y = sprite.from.y + (sprite.to.y - sprite.from.y) * eased + Math.sin(progress * Math.PI) * -18;
+        sprite.card.position.set(x - sprite.from.x, y - sprite.from.y);
+        sprite.icon.position.set(x, y - 2);
+      });
     });
   });
 
@@ -158,13 +199,13 @@ function describeEvent(task: OfficeTask) {
 }
 
 function nextStatus(task: OfficeTask): OfficeTask {
-  if (task.owner === 'entrada') return { ...task, owner: 'vera', status: 'trabajando', detail: 'Vera está clasificando el mensaje.' };
-  if (task.owner === 'vera') return { ...task, owner: 'cris', status: 'trabajando', detail: 'Cris ejecuta diagnóstico técnico.' };
+  if (task.owner === 'entrada') return { ...task, fromOwner: 'entrada', reactingOwner: 'vera', owner: 'vera', status: 'trabajando', detail: 'Vera está clasificando el mensaje.' };
+  if (task.owner === 'vera') return { ...task, fromOwner: 'vera', reactingOwner: 'cris', owner: 'cris', status: 'trabajando', detail: 'Cris ejecuta diagnóstico técnico.' };
   if (task.owner === 'cris') {
     const blocked = task.id % 3 === 0;
-    return { ...task, owner: blocked ? 'decision' : 'cris', status: blocked ? 'bloqueado' : 'resuelto', detail: blocked ? 'Necesita decisión humana de David.' : 'Cris dejó la tarea resuelta.' };
+    return { ...task, fromOwner: 'cris', reactingOwner: blocked ? 'decision' : 'cris', owner: blocked ? 'decision' : 'cris', status: blocked ? 'bloqueado' : 'resuelto', detail: blocked ? 'Necesita decisión humana de David.' : 'Cris dejó la tarea resuelta.' };
   }
-  return { ...task, status: 'resuelto', detail: 'David tomó la decisión y la tarea queda cerrada.' };
+  return { ...task, fromOwner: 'decision', reactingOwner: 'decision', status: 'resuelto', detail: 'David tomó la decisión y la tarea queda cerrada.' };
 }
 
 function App() {
@@ -192,6 +233,9 @@ function App() {
       { id: Date.now(), text: describeEvent(task), status: next.status, at: nowTime() },
       ...current,
     ].slice(0, 8));
+    window.setTimeout(() => {
+      setTasks((current) => current.map((item) => item.id === selectedId ? { ...item, fromOwner: undefined, reactingOwner: undefined } : item));
+    }, 850);
   }
 
 
@@ -199,9 +243,9 @@ function App() {
     const id = Date.now();
     const flow: OfficeTask[] = [
       { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'esperando', owner: 'entrada', detail: 'Entra un WhatsApp nuevo por recepción.' },
-      { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'trabajando', owner: 'vera', detail: 'Vera recoge el WhatsApp y lo clasifica.' },
-      { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'trabajando', owner: 'cris', detail: 'Vera lo deriva a Cris para resolución técnica.' },
-      { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'resuelto', owner: 'cris', detail: 'Cris termina la tarea y deja tarjeta verde.' },
+      { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'trabajando', fromOwner: 'entrada', reactingOwner: 'vera', owner: 'vera', detail: 'Vera recoge el WhatsApp y lo clasifica.' },
+      { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'trabajando', fromOwner: 'vera', reactingOwner: 'cris', owner: 'cris', detail: 'Vera lo deriva a Cris para resolución técnica.' },
+      { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'resuelto', fromOwner: 'cris', reactingOwner: 'cris', owner: 'cris', detail: 'Cris termina la tarea y deja tarjeta verde.' },
     ];
     const notes = [
       'Entra WhatsApp automático en recepción',
@@ -220,7 +264,10 @@ function App() {
           { id: Date.now() + step, text: notes[step], status: snapshot.status, at: nowTime() },
           ...current,
         ].slice(0, 8));
-      }, step * 850);
+        window.setTimeout(() => {
+          setTasks((current) => current.map((task) => task.id === id ? { ...task, fromOwner: undefined, reactingOwner: undefined } : task));
+        }, 820);
+      }, step * 1050);
     });
   }
 
