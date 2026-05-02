@@ -196,3 +196,25 @@ Primer MVP implementado:
 - `main` y `visual-room` quedan intactas.
 
 Este MVP no intenta portar toda la extensión VS Code; solo prueba si la dirección visual y técnica de `pablodelucca/pixel-agents` gana frente al enfoque isométrico.
+
+## Composición por zonas funcionales
+
+Tras revisar una referencia pixel office aportada por David, `4402` se recompuso con esta estructura:
+
+- izquierda grande: operación/recepción de Vera,
+- arriba derecha: entrada, sistema y tareas entrantes,
+- abajo derecha: oficina Cris + decisiones humanas,
+- suelos con colores distintos por función,
+- paredes formando habitaciones reales con huecos de paso,
+- escritorios alineados a grid,
+- muebles contra paredes,
+- pasillos limpios,
+- decisiones humanas como sala propia, no overlay rojo.
+
+Se mantiene el núcleo del MVP:
+
+- walking real,
+- BFS,
+- Vera/Cris animadas,
+- flujo verde/rojo,
+- timeline/panel.
