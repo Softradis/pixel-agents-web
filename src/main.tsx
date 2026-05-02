@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Application, Container, Graphics, Text } from 'pixi.js';
+import { Application, Container, Graphics, Sprite, Text } from 'pixi.js';
 import './style.css';
 
 type TaskStatus = 'esperando' | 'trabajando' | 'bloqueado' | 'resuelto';
@@ -62,6 +62,19 @@ const initialTasks: OfficeTask[] = [
   },
 ];
 
+
+const assetBase = '/assets/kenney-isometric-miniature-library/Angle';
+
+function addIsoAsset(stage: Container, file: string, x: number, y: number, scale = 0.72, alpha = 1) {
+  const sprite = Sprite.from(`${assetBase}/${file}`);
+  sprite.anchor.set(0.5, 0.82);
+  sprite.position.set(x, y);
+  sprite.scale.set(scale);
+  sprite.alpha = alpha;
+  stage.addChild(sprite);
+  return sprite;
+}
+
 function isoTile(g: Graphics, x: number, y: number, w: number, h: number, fill: number, stroke = 0x1a2740) {
   g.poly([x, y - h / 2, x + w / 2, y, x, y + h / 2, x - w / 2, y]);
   g.fill(fill);
@@ -92,6 +105,14 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     isoTile(root, cx + 40, cy - 90, 220, 120, 0x17324a);
     isoTile(root, cx - 85, cy + 65, 260, 130, 0x102a3f);
     isoTile(root, cx + 190, cy + 65, 210, 105, 0x2b213d);
+
+    addIsoAsset(stage, 'floorCarpet_N.png', cx - 210, cy - 58, 0.7, 0.9);
+    addIsoAsset(stage, 'floorCarpet_S.png', cx + 40, cy - 58, 0.7, 0.9);
+    addIsoAsset(stage, 'longTableDecoratedChairsBooks_N.png', cx + 40, cy - 40, 0.62);
+    addIsoAsset(stage, 'bookcaseWideBooks_N.png', cx + 42, cy - 124, 0.55);
+    addIsoAsset(stage, 'longTableChairs_W.png', cx - 210, cy - 40, 0.58);
+    addIsoAsset(stage, 'bookStand_N.png', cx - 116, cy + 80, 0.55);
+    addIsoAsset(stage, 'displayCaseOpen_N.png', cx + 190, cy + 74, 0.58);
 
     const labels = [
       ['Recepción Vera', cx - 210, cy - 165],
@@ -130,6 +151,8 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     const agentBodies: { body: Graphics; active: boolean }[] = [];
     agents.forEach(([name, x, y, color, owner]) => {
       const active = activeOwners.has(owner);
+      const deskAsset = owner === 'vera' ? 'libraryChair_N.png' : 'libraryChair_E.png';
+      addIsoAsset(stage, deskAsset, x + (owner === 'vera' ? -32 : 34), y + 36, 0.42, 0.95);
       const glow = new Graphics();
       glow.circle(x, y + 12, active ? 36 : 0).fill({ color, alpha: active ? 0.16 : 0 });
       stage.addChild(glow);
@@ -160,6 +183,9 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
       const from = task.fromOwner ? positions[task.fromOwner] : pos;
       const x = (task.fromOwner ? from.x : pos.x) + slotX;
       const y = (task.fromOwner ? from.y : pos.y) + slotY;
+      const shadow = new Graphics();
+      shadow.ellipse(x, y + 18, 42, 10).fill({ color: 0x000000, alpha: 0.18 });
+      stage.addChild(shadow);
       const card = new Graphics();
       card.roundRect(x - 42, y - 22, 84, 44, 10).fill(colors[task.status]).stroke({ width: selectedId === task.id ? 4 : 2, color: selectedId === task.id ? 0xffffff : 0x0b1220 });
       card.eventMode = 'static';

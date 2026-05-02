@@ -22,6 +22,7 @@ MVP visual inicial desplegado y evolucionando hacia oficina viva.
 - Movimiento visual de tareas entre zonas.
 - Reacción simple de Vera/Cris mediante brillo y bounce.
 - Zona de Decisiones David destacada cuando una tarea queda bloqueada.
+- Primera integración de assets Kenney Isometric Miniature Library: alfombras, mesas, sillas, estantería/display y sombras de tareas.
 - Caminos visuales entre entrada, Vera, Cris y decisiones.
 
 ## Pendiente inmediato
