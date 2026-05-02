@@ -1,29 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Application, Assets, Container, Graphics, Sprite, Text } from 'pixi.js';
 import './style.css';
 
 type TaskStatus = 'esperando' | 'trabajando' | 'bloqueado' | 'resuelto';
 type Owner = 'entrada' | 'vera' | 'cris' | 'decision';
 type TimelineEvent = { id: number; text: string; status: TaskStatus; at: string };
-
-type LayoutKey = 'salaVera' | 'salaCris' | 'paredVeraIzq1' | 'paredVeraIzq2' | 'paredVeraIzq3' | 'paredVeraFondo1' | 'paredVeraFondo2' | 'paredCrisIzq1' | 'paredCrisIzq2' | 'paredCrisIzq3' | 'paredCrisFondo1' | 'paredCrisFondo2' | 'paredCrisFondo3' | 'entrada' | 'decisiones' | 'vera' | 'cris' | 'muebleRecepcion' | 'mesaVera' | 'mesaCris' | 'sillonDecision';
-type LayoutPoint = { x: number; y: number };
-type CompositionLayout = Partial<Record<LayoutKey, LayoutPoint>>;
-
-const layoutKeys: LayoutKey[] = ['salaVera', 'salaCris', 'paredVeraIzq1', 'paredVeraIzq2', 'paredVeraIzq3', 'paredVeraFondo1', 'paredVeraFondo2', 'paredCrisIzq1', 'paredCrisIzq2', 'paredCrisIzq3', 'paredCrisFondo1', 'paredCrisFondo2', 'paredCrisFondo3', 'entrada', 'decisiones', 'vera', 'cris', 'muebleRecepcion', 'mesaVera', 'mesaCris', 'sillonDecision'];
-
-function cleanLayout(layout: CompositionLayout): CompositionLayout {
-  const clean: CompositionLayout = {};
-  layoutKeys.forEach((key) => {
-    const point = layout[key];
-    if (!point) return;
-    const x = Math.round(point.x || 0);
-    const y = Math.round(point.y || 0);
-    if (x !== 0 || y !== 0) clean[key] = { x, y };
-  });
-  return clean;
-}
 
 type OfficeTask = {
   id: number;
@@ -37,18 +18,30 @@ type OfficeTask = {
   pauseLabel?: string;
 };
 
-const colors: Record<TaskStatus, number> = {
-  esperando: 0xf4c542,
-  trabajando: 0x4fa3ff,
-  bloqueado: 0xff5d5d,
-  resuelto: 0x56d364,
-};
+type AgentState = 'idle' | 'walk' | 'working' | 'blocked';
+type Direction = 'down' | 'up' | 'right' | 'left';
+type Point = { x: number; y: number };
+type Tile = { col: number; row: number };
+
+const TILE = 32;
+const FRAME_W = 16;
+const FRAME_H = 32;
+const FRAME_SCALE = 2;
+const WALK_FRAME_MS = 140;
+const WORK_FRAME_MS = 260;
 
 const statusText: Record<TaskStatus, string> = {
   esperando: 'Esperando',
   trabajando: 'Trabajando',
   bloqueado: 'Bloqueado',
   resuelto: 'Resuelto',
+};
+
+const statusColor: Record<TaskStatus, string> = {
+  esperando: '#f4c542',
+  trabajando: '#4fa3ff',
+  bloqueado: '#ff5d5d',
+  resuelto: '#56d364',
 };
 
 const nowTime = () => new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date());
@@ -80,485 +73,82 @@ const initialTasks: OfficeTask[] = [
   },
 ];
 
-
-
-const kindMeta: Record<OfficeTask['kind'], { icon: string; label: string; tint: number }> = {
-  whatsapp: { icon: '💬', label: 'WhatsApp', tint: 0x25d366 },
-  email: { icon: '✉️', label: 'Resuelto', tint: 0x56d364 },
-  bug: { icon: '⚡', label: 'Bug', tint: 0xffb020 },
-  decision: { icon: '❗', label: 'Decisión', tint: 0xff5d5d },
+const layout = {
+  cols: 22,
+  rows: 14,
+  entrada: { col: 2, row: 10 },
+  veraDesk: { col: 6, row: 7 },
+  veraSeat: { col: 6, row: 8 },
+  corridor: { col: 10, row: 8 },
+  crisDesk: { col: 15, row: 7 },
+  crisSeat: { col: 15, row: 8 },
+  decision: { col: 19, row: 5 },
 };
 
-function addZoneBadge(stage: Container, title: string, subtitle: string, x: number, y: number, color: number) {
-  const badge = new Graphics();
-  badge.roundRect(x - 76, y - 24, 152, 48, 14).fill({ color, alpha: 0.2 }).stroke({ width: 2, color, alpha: 0.75 });
-  stage.addChild(badge);
-  const text = new Text({ text: title, style: { fill: '#ffffff', fontSize: 13, fontWeight: '800' } });
-  text.anchor.set(0.5);
-  text.position.set(x, y - 7);
-  stage.addChild(text);
-  const sub = new Text({ text: subtitle, style: { fill: '#b9cee5', fontSize: 10, fontWeight: '600' } });
-  sub.anchor.set(0.5);
-  sub.position.set(x, y + 10);
-  stage.addChild(sub);
+const zones = {
+  entrada: { col: 2, row: 10 },
+  vera: layout.veraSeat,
+  cris: layout.crisSeat,
+  decision: layout.decision,
+} satisfies Record<Owner, Tile>;
+
+const blocked = new Set<string>([
+  // outer walls
+  ...Array.from({ length: layout.cols }, (_, col) => `${col}:0`),
+  ...Array.from({ length: layout.cols }, (_, col) => `${col}:${layout.rows - 1}`),
+  ...Array.from({ length: layout.rows }, (_, row) => `0:${row}`),
+  ...Array.from({ length: layout.rows }, (_, row) => `${layout.cols - 1}:${row}`),
+  // inner divider walls with corridor openings
+  '10:1', '10:2', '10:3', '10:4', '10:5', '10:11', '10:12',
+  // desks and decision furniture block walking
+  `${layout.veraDesk.col}:${layout.veraDesk.row}`,
+  `${layout.crisDesk.col}:${layout.crisDesk.row}`,
+  `${layout.decision.col}:${layout.decision.row}`,
+]);
+
+const tileCenter = (tile: Tile): Point => ({ x: tile.col * TILE + TILE / 2, y: tile.row * TILE + TILE / 2 });
+const key = (tile: Tile) => `${tile.col}:${tile.row}`;
+
+function directionBetween(a: Tile, b: Tile): Direction {
+  if (b.col > a.col) return 'right';
+  if (b.col < a.col) return 'left';
+  if (b.row < a.row) return 'up';
+  return 'down';
 }
 
-const assetBase = '/assets/essential-isometric';
-const usedIsoAssetFiles = [
-  'floor01_01.png', 'floor01_02.png', 'floor01_03.png', 'floor01_04.png',
-  'wall01_sngl_L.png', 'wall01_sngl_R.png', 'wall01_ent02_L.png', 'wall01_ent02_R.png', 'door_front.png', 'window01.png',
-  'officedesk01big.png', 'officedesk02big.png', 'officedesk01norm.png', 'officeChair01.png', 'officeChair01_back.png',
-  'computer01.png', 'computer02.png', 'laptop.png', 'bookshelf01.png', 'bookshelf08.png', 'rug01.png', 'rug03.png',
-  'armchair.png', 'lamp01.png', 'paper.png', 'telephone.png', 'drawer05.png', 'couch.png', 'tablecenter01.png', 'rack04.png',
-  'plant01.png', 'plant04.png', 'pinnednote01.png', 'clock01.png', 'vera_worker.png', 'cris_worker.png',
-];
+function findPath(start: Tile, goal: Tile): Tile[] {
+  if (key(start) === key(goal)) return [];
+  const queue: Tile[] = [start];
+  const cameFrom = new Map<string, string | null>([[key(start), null]]);
+  const dirs = [{ col: 1, row: 0 }, { col: -1, row: 0 }, { col: 0, row: 1 }, { col: 0, row: -1 }];
 
-function addIsoAsset(stage: Container, file: string, x: number, y: number, scale = 2.45, alpha = 1, anchorX = 0.5, anchorY = 1) {
-  const sprite = Sprite.from(`${assetBase}/${file}`);
-  sprite.anchor.set(anchorX, anchorY);
-  sprite.position.set(x, y);
-  sprite.scale.set(scale);
-  sprite.alpha = alpha;
-  stage.addChild(sprite);
-  return sprite;
+  while (queue.length) {
+    const current = queue.shift()!;
+    if (key(current) === key(goal)) break;
+    for (const dir of dirs) {
+      const next = { col: current.col + dir.col, row: current.row + dir.row };
+      const nextKey = key(next);
+      if (next.col < 0 || next.row < 0 || next.col >= layout.cols || next.row >= layout.rows) continue;
+      if (blocked.has(nextKey) && nextKey !== key(goal)) continue;
+      if (cameFrom.has(nextKey)) continue;
+      cameFrom.set(nextKey, key(current));
+      queue.push(next);
+    }
+  }
+
+  if (!cameFrom.has(key(goal))) return [];
+  const path: Tile[] = [];
+  let currentKey: string | null = key(goal);
+  while (currentKey && currentKey !== key(start)) {
+    const [col, row] = currentKey.split(':').map(Number);
+    path.unshift({ col, row });
+    currentKey = cameFrom.get(currentKey) ?? null;
+  }
+  return path;
 }
 
-function isoTile(g: Graphics, x: number, y: number, w: number, h: number, fill: number, stroke = 0x1a2740) {
-  g.poly([x, y - h / 2, x + w / 2, y, x, y + h / 2, x - w / 2, y]);
-  g.fill(fill);
-  g.stroke({ width: 2, color: stroke, alpha: 0.75 });
-}
-
-function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: number | null, onSelect: (id: number) => void, compositionMode: boolean, compositionLayout: CompositionLayout, onLayoutChange: (layout: CompositionLayout) => void) {
-  const app = new Application();
-  let destroyed = false;
-
-  app.init({ resizeTo: canvas, background: '#10151f', antialias: true }).then(async () => {
-    if (destroyed) {
-      app.destroy(true);
-      return;
-    }
-    await Assets.load(usedIsoAssetFiles.map((file) => `${assetBase}/${file}`));
-    if (destroyed) {
-      app.destroy(true);
-      return;
-    }
-    canvas.innerHTML = '';
-    canvas.appendChild(app.canvas);
-
-    const stage = new Container();
-    app.stage.addChild(stage);
-
-    const root = new Graphics();
-    stage.addChild(root);
-    const cx = app.renderer.width / 2;
-    const cy = app.renderer.height / 2 + 88;
-    const offset = (key: LayoutKey) => compositionLayout[key] ?? { x: 0, y: 0 };
-    const withOffset = (key: LayoutKey, x: number, y: number) => ({ x: x + offset(key).x, y: y + offset(key).y });
-    const addMovedAsset = (key: LayoutKey, file: string, x: number, y: number, scale = 2.45, alpha = 1, anchorX = 0.5, anchorY = 1) => {
-      const p = withOffset(key, x, y);
-      return addIsoAsset(stage, file, p.x, p.y, scale, alpha, anchorX, anchorY);
-    };
-
-    // Composición base: dos habitaciones conectadas, no una sala única reetiquetada.
-    const salaVeraOffset = offset('salaVera');
-    const salaCrisOffset = offset('salaCris');
-    const leftRoom = { x: cx - 235 + salaVeraOffset.x, y: cy + 26 + salaVeraOffset.y };
-    const rightRoom = { x: cx + 205 + salaCrisOffset.x, y: cy + 18 + salaCrisOffset.y };
-    const corridor = { x: cx - 2 + (salaVeraOffset.x + salaCrisOffset.x) / 2, y: cy + 40 + (salaVeraOffset.y + salaCrisOffset.y) / 2 };
-
-    const roomShadow = new Graphics();
-    roomShadow
-      .poly([
-        leftRoom.x - 262, leftRoom.y - 24,
-        leftRoom.x - 10, leftRoom.y - 152,
-        leftRoom.x + 244, leftRoom.y - 24,
-        leftRoom.x - 10, leftRoom.y + 122,
-      ]).fill({ color: 0x05070c, alpha: 0.5 })
-      .poly([
-        corridor.x - 112, corridor.y - 22,
-        corridor.x + 112, corridor.y - 72,
-        corridor.x + 186, corridor.y - 18,
-        corridor.x - 38, corridor.y + 42,
-      ]).fill({ color: 0x05070c, alpha: 0.38 })
-      .poly([
-        rightRoom.x - 280, rightRoom.y - 34,
-        rightRoom.x + 4, rightRoom.y - 178,
-        rightRoom.x + 292, rightRoom.y - 34,
-        rightRoom.x + 6, rightRoom.y + 136,
-      ]).fill({ color: 0x05070c, alpha: 0.52 });
-    stage.addChild(roomShadow);
-
-    const leftFloor = new Graphics();
-    leftFloor
-      .poly([
-        leftRoom.x - 236, leftRoom.y - 28,
-        leftRoom.x - 8, leftRoom.y - 142,
-        leftRoom.x + 220, leftRoom.y - 24,
-        leftRoom.x - 6, leftRoom.y + 108,
-      ]).fill(0x593f31).stroke({ width: 3, color: 0x7bbce8, alpha: 0.55 })
-      .poly([
-        leftRoom.x - 8, leftRoom.y - 142,
-        leftRoom.x + 220, leftRoom.y - 24,
-        leftRoom.x + 220, leftRoom.y - 92,
-        leftRoom.x - 8, leftRoom.y - 206,
-      ]).fill({ color: 0x2a344a, alpha: 0.72 })
-      .poly([
-        leftRoom.x - 236, leftRoom.y - 28,
-        leftRoom.x - 8, leftRoom.y - 142,
-        leftRoom.x - 8, leftRoom.y - 206,
-        leftRoom.x - 236, leftRoom.y - 90,
-      ]).fill({ color: 0x222b3f, alpha: 0.72 });
-    stage.addChild(leftFloor);
-
-    const corridorFloor = new Graphics();
-    corridorFloor
-      .poly([
-        corridor.x - 118, corridor.y - 18,
-        corridor.x + 98, corridor.y - 66,
-        corridor.x + 172, corridor.y - 14,
-        corridor.x - 42, corridor.y + 42,
-      ]).fill(0x6a513d).stroke({ width: 3, color: 0xffe0a8, alpha: 0.42 })
-      .poly([
-        corridor.x - 96, corridor.y - 8,
-        corridor.x + 104, corridor.y - 52,
-        corridor.x + 140, corridor.y - 22,
-        corridor.x - 58, corridor.y + 26,
-      ]).fill({ color: 0xffe0a8, alpha: 0.10 });
-    stage.addChild(corridorFloor);
-
-    const rightFloor = new Graphics();
-    rightFloor
-      .poly([
-        rightRoom.x - 252, rightRoom.y - 44,
-        rightRoom.x + 4, rightRoom.y - 172,
-        rightRoom.x + 260, rightRoom.y - 38,
-        rightRoom.x + 2, rightRoom.y + 120,
-      ]).fill(0x50372f).stroke({ width: 3, color: 0xffca7a, alpha: 0.55 })
-      .poly([
-        rightRoom.x + 4, rightRoom.y - 172,
-        rightRoom.x + 260, rightRoom.y - 38,
-        rightRoom.x + 260, rightRoom.y - 106,
-        rightRoom.x + 4, rightRoom.y - 236,
-      ]).fill({ color: 0x342c3b, alpha: 0.74 })
-      .poly([
-        rightRoom.x - 252, rightRoom.y - 44,
-        rightRoom.x + 4, rightRoom.y - 172,
-        rightRoom.x + 4, rightRoom.y - 236,
-        rightRoom.x - 252, rightRoom.y - 106,
-      ]).fill({ color: 0x2d2738, alpha: 0.74 });
-    stage.addChild(rightFloor);
-
-    const receptionTiles = [
-      [leftRoom.x - 132, leftRoom.y + 8, 'floor01_01.png'], [leftRoom.x - 32, leftRoom.y - 40, 'floor01_02.png'], [leftRoom.x + 68, leftRoom.y - 88, 'floor01_03.png'],
-      [leftRoom.x - 32, leftRoom.y + 62, 'floor01_04.png'], [leftRoom.x + 68, leftRoom.y + 14, 'floor01_01.png'], [leftRoom.x + 168, leftRoom.y - 34, 'floor01_02.png'],
-    ] as const;
-    receptionTiles.forEach(([x, y, file]) => addIsoAsset(stage, file, x, y, 2.08, 1, 0.5, 0.5));
-
-    const corridorTiles = [
-      [corridor.x - 48, corridor.y + 12, 'floor01_04.png'], [corridor.x + 46, corridor.y - 10, 'floor01_02.png'], [corridor.x + 116, corridor.y + 22, 'floor01_03.png'],
-    ] as const;
-    corridorTiles.forEach(([x, y, file]) => addIsoAsset(stage, file, x, y, 1.78, 0.92, 0.5, 0.5));
-
-    const officeTiles = [
-      [rightRoom.x - 144, rightRoom.y - 14, 'floor01_01.png'], [rightRoom.x - 44, rightRoom.y - 62, 'floor01_02.png'], [rightRoom.x + 56, rightRoom.y - 110, 'floor01_03.png'],
-      [rightRoom.x - 44, rightRoom.y + 40, 'floor01_04.png'], [rightRoom.x + 56, rightRoom.y - 8, 'floor01_01.png'], [rightRoom.x + 156, rightRoom.y - 56, 'floor01_02.png'],
-      [rightRoom.x + 56, rightRoom.y + 92, 'floor01_03.png'], [rightRoom.x + 160, rightRoom.y + 44, 'floor01_04.png'],
-    ] as const;
-    officeTiles.forEach(([x, y, file]) => addIsoAsset(stage, file, x, y, 2.08, 1, 0.5, 0.5));
-
-    // Paredes separadas: recepción de Vera a la izquierda y oficina técnica de Cris a la derecha.
-    addMovedAsset('paredVeraIzq1', 'wall01_ent02_L.png', leftRoom.x - 198, leftRoom.y - 26, 2.28);
-    addMovedAsset('paredVeraIzq2', 'wall01_sngl_L.png', leftRoom.x - 142, leftRoom.y - 74, 2.28);
-    addMovedAsset('paredVeraIzq3', 'wall01_sngl_L.png', leftRoom.x - 86, leftRoom.y - 122, 2.28);
-    addMovedAsset('paredVeraFondo1', 'wall01_sngl_R.png', leftRoom.x + 76, leftRoom.y - 132, 2.28);
-    addMovedAsset('paredVeraFondo2', 'wall01_ent02_R.png', leftRoom.x + 136, leftRoom.y - 98, 2.28);
-    addMovedAsset('entrada', 'door_front.png', leftRoom.x - 198, leftRoom.y + 82, 2.42);
-    addMovedAsset('paredVeraFondo1', 'window01.png', leftRoom.x + 62, leftRoom.y - 140, 1.95);
-    addMovedAsset('paredVeraIzq3', 'clock01.png', leftRoom.x - 92, leftRoom.y - 136, 1.85);
-
-    addMovedAsset('paredCrisIzq1', 'wall01_ent02_L.png', rightRoom.x - 198, rightRoom.y - 42, 2.28);
-    addMovedAsset('paredCrisIzq2', 'wall01_sngl_L.png', rightRoom.x - 142, rightRoom.y - 90, 2.28);
-    addMovedAsset('paredCrisIzq3', 'wall01_sngl_L.png', rightRoom.x - 86, rightRoom.y - 138, 2.28);
-    addMovedAsset('paredCrisFondo1', 'wall01_sngl_R.png', rightRoom.x + 82, rightRoom.y - 150, 2.28);
-    addMovedAsset('paredCrisFondo2', 'wall01_sngl_R.png', rightRoom.x + 146, rightRoom.y - 112, 2.28);
-    addMovedAsset('paredCrisFondo3', 'wall01_ent02_R.png', rightRoom.x + 210, rightRoom.y - 74, 2.28);
-    addMovedAsset('paredCrisFondo1', 'window01.png', rightRoom.x + 52, rightRoom.y - 158, 1.95);
-    addMovedAsset('paredCrisFondo2', 'pinnednote01.png', rightRoom.x + 166, rightRoom.y - 122, 2.0);
-
-    const positions: Record<Owner, { x: number; y: number }> = {
-      entrada: withOffset('entrada', leftRoom.x - 176, leftRoom.y + 72),
-      vera: withOffset('vera', leftRoom.x - 18, leftRoom.y + 34),
-      cris: withOffset('cris', rightRoom.x - 30, rightRoom.y + 48),
-      decision: withOffset('decisiones', rightRoom.x + 150, rightRoom.y - 24),
-    };
-    const taskPositions: Record<Owner, { x: number; y: number }> = {
-      entrada: { x: positions.entrada.x + 16, y: positions.entrada.y + 30 },
-      vera: { x: positions.vera.x + 76, y: positions.vera.y + 12 },
-      cris: { x: positions.cris.x + 86, y: positions.cris.y + 0 },
-      decision: { x: positions.decision.x + 36, y: positions.decision.y + 58 },
-    };
-
-    // Muebles propios por habitación: recepción operativa para Vera, oficina técnica para Cris.
-    { const p = withOffset('muebleRecepcion', positions.entrada.x + 22, positions.entrada.y + 18); addIsoAsset(stage, 'rug03.png', p.x, p.y, 2.2, 0.96); }
-    { const p = withOffset('muebleRecepcion', positions.entrada.x - 18, positions.entrada.y + 2); addIsoAsset(stage, 'rack04.png', p.x, p.y, 2.15); }
-    { const p = withOffset('muebleRecepcion', positions.entrada.x + 44, positions.entrada.y - 20); addIsoAsset(stage, 'telephone.png', p.x, p.y, 2.1); }
-    addIsoAsset(stage, 'plant01.png', leftRoom.x - 190, leftRoom.y + 122, 2.0);
-
-    { const p = withOffset('mesaVera', positions.vera.x + 8, positions.vera.y + 62); addIsoAsset(stage, 'rug01.png', p.x, p.y, 2.35, 0.96); }
-    { const p = withOffset('mesaVera', positions.vera.x + 4, positions.vera.y + 30); addIsoAsset(stage, 'officedesk01norm.png', p.x, p.y, 2.48); }
-    { const p = withOffset('mesaVera', positions.vera.x - 26, positions.vera.y + 42); addIsoAsset(stage, 'officeChair01_back.png', p.x, p.y, 2.28, 0.95); }
-    { const p = withOffset('mesaVera', positions.vera.x + 12, positions.vera.y - 4); addIsoAsset(stage, 'laptop.png', p.x, p.y, 2.25); }
-    addIsoAsset(stage, 'bookshelf08.png', leftRoom.x + 124, leftRoom.y - 44, 2.18);
-    addIsoAsset(stage, 'paper.png', leftRoom.x + 96, leftRoom.y + 56, 2.0);
-
-    { const p = withOffset('mesaCris', positions.cris.x + 18, positions.cris.y + 36); addIsoAsset(stage, 'officedesk02big.png', p.x, p.y, 2.62); }
-    { const p = withOffset('mesaCris', positions.cris.x + 20, positions.cris.y - 4); addIsoAsset(stage, 'computer02.png', p.x, p.y, 2.48); }
-    { const p = withOffset('mesaCris', positions.cris.x - 26, positions.cris.y + 42); addIsoAsset(stage, 'officeChair01.png', p.x, p.y, 2.28, 0.95); }
-    addIsoAsset(stage, 'bookshelf01.png', rightRoom.x - 136, rightRoom.y - 64, 2.18);
-    addIsoAsset(stage, 'drawer05.png', rightRoom.x + 34, rightRoom.y + 112, 2.25);
-    addIsoAsset(stage, 'plant04.png', rightRoom.x + 224, rightRoom.y + 94, 2.0);
-
-    // Zona roja: queda físicamente al fondo/derecha de la oficina técnica, separada de la mesa de Cris.
-    const redZone = new Graphics();
-    redZone.poly([
-      positions.decision.x - 78, positions.decision.y + 18,
-      positions.decision.x + 2, positions.decision.y - 24,
-      positions.decision.x + 104, positions.decision.y + 26,
-      positions.decision.x + 20, positions.decision.y + 82,
-    ]).fill({ color: 0x5a1717, alpha: 0.52 }).stroke({ width: 3, color: 0xff5d5d, alpha: 0.65 });
-    stage.addChild(redZone);
-    { const p = withOffset('sillonDecision', positions.decision.x - 42, positions.decision.y + 66); addIsoAsset(stage, 'armchair.png', p.x, p.y, 2.32); }
-    { const p = withOffset('sillonDecision', positions.decision.x + 28, positions.decision.y + 36); addIsoAsset(stage, 'drawer05.png', p.x, p.y, 2.35); }
-    addIsoAsset(stage, 'pinnednote01.png', positions.decision.x + 58, positions.decision.y - 36, 2.1);
-
-    // Caminos en diagonal suave: entrada → Vera → Cris → decisiones, sin tubería recta.
-    const paths = new Graphics();
-    const pathPairs: [Owner, Owner][] = [['entrada', 'vera'], ['vera', 'cris'], ['cris', 'decision']];
-    pathPairs.forEach(([from, to]) => {
-      const a = positions[from];
-      const b = positions[to];
-      const mx = (a.x + b.x) / 2;
-      const my = (a.y + b.y) / 2 - 28;
-      paths.moveTo(a.x, a.y + 18);
-      paths.quadraticCurveTo(mx, my, b.x, b.y + 18);
-    });
-    paths.stroke({ width: 4, color: 0xffe0a8, alpha: 0.22 });
-    stage.addChild(paths);
-
-    const activeOwners = new Set(tasks.flatMap((task) => [task.reactingOwner, task.status === 'trabajando' || task.status === 'bloqueado' ? task.owner : undefined]).filter(Boolean) as Owner[]);
-
-    if (activeOwners.has('decision')) {
-      const decisionPulse = new Graphics();
-      decisionPulse.poly([
-        positions.decision.x + 26, positions.decision.y + 6,
-        positions.decision.x + 90, positions.decision.y + 38,
-        positions.decision.x + 28, positions.decision.y + 72,
-        positions.decision.x - 38, positions.decision.y + 38,
-      ]).stroke({ width: 5, color: 0xff5d5d, alpha: 0.8 });
-      stage.addChild(decisionPulse);
-    }
-
-    // Etiquetas pequeñas integradas, solo para orientar.
-    const smallLabels = [
-      ['Recepción Vera', leftRoom.x - 40, leftRoom.y - 112, 0x2f9fd7, 118],
-      ['Pasillo tareas', corridor.x + 26, corridor.y - 54, 0xffe0a8, 110],
-      ['Oficina Cris', rightRoom.x + 8, rightRoom.y - 142, 0xffa94d, 112],
-      ['Decisiones humanas', positions.decision.x + 18, positions.decision.y - 48, 0xff5d5d, 138],
-    ] as const;
-    smallLabels.forEach(([label, x, y, color, width]) => {
-      const tag = new Graphics();
-      tag.roundRect(x - width / 2, y - 13, width, 26, 9).fill({ color, alpha: 0.72 }).stroke({ width: 1, color: 0xffffff, alpha: 0.38 });
-      stage.addChild(tag);
-      const text = new Text({ text: label, style: { fill: '#ffffff', fontSize: 10, fontWeight: '900' } });
-      text.anchor.set(0.5);
-      text.position.set(x, y + 1);
-      stage.addChild(text);
-    });
-
-    const agents = [
-      ['Vera', 'vera_worker.png', positions.vera.x - 18, positions.vera.y + 34, 'vera'],
-      ['Cris', 'cris_worker.png', positions.cris.x - 10, positions.cris.y + 38, 'cris'],
-    ] as const;
-    const agentBodies: { body: Container; glow: Graphics; active: boolean; baseX: number; baseY: number; baseScale: number; phase: number }[] = [];
-    agents.forEach(([name, file, x, y, owner], idx) => {
-      const active = activeOwners.has(owner);
-      const glow = new Graphics();
-      glow.ellipse(x, y + 4, active ? 36 : 26, active ? 14 : 8).fill({ color: owner === 'vera' ? 0x2f9fd7 : 0xffca7a, alpha: active ? 0.28 : 0.12 });
-      stage.addChild(glow);
-      const body = new Container();
-      const sprite = Sprite.from(`${assetBase}/${file}`);
-      sprite.anchor.set(0.5, 1);
-      const baseScale = owner === 'vera' ? 2.75 : 2.55;
-      sprite.scale.set(baseScale);
-      body.addChild(sprite);
-      body.position.set(x, y);
-      stage.addChild(body);
-      agentBodies.push({ body, glow, active, baseX: x, baseY: y, baseScale, phase: idx * 1.7 });
-      const nameText = new Text({ text: name, style: { fill: '#fff7e6', fontSize: 12, fontWeight: '800' } });
-      nameText.anchor.set(0.5);
-      nameText.position.set(x, y + 18);
-      stage.addChild(nameText);
-    });
-
-    const movingSprites: { card: Graphics; icon: Text; label: Text; from: { x: number; y: number }; to: { x: number; y: number }; started: number }[] = [];
-
-    tasks.forEach((task, index) => {
-      const pos = taskPositions[task.owner];
-      const slotX = (index % 3) * 20 - 20;
-      const slotY = Math.floor(index / 3) * 18;
-      const from = task.fromOwner ? taskPositions[task.fromOwner] : pos;
-      const x = (task.fromOwner ? from.x : pos.x) + slotX;
-      const y = (task.fromOwner ? from.y : pos.y) + slotY;
-      const meta = kindMeta[task.kind];
-
-      const shadow = new Graphics();
-      shadow.ellipse(x, y + 14, 26, 7).fill({ color: 0x000000, alpha: 0.22 });
-      stage.addChild(shadow);
-
-      // Objeto físico pequeño dentro de la habitación.
-      const card = new Graphics();
-      if (task.status === 'bloqueado') {
-        card.roundRect(x - 34, y - 20, 68, 40, 8).fill(0xd34a3f).stroke({ width: selectedId === task.id ? 3 : 2, color: 0xffe0d6 });
-      } else if (task.status === 'resuelto') {
-        card.roundRect(x - 33, y - 19, 66, 38, 8).fill(0x56d364).stroke({ width: selectedId === task.id ? 3 : 2, color: 0xe6ffed });
-      } else {
-        card.roundRect(x - 33, y - 19, 66, 38, 8).fill(0xf0d6a3).stroke({ width: selectedId === task.id ? 3 : 2, color: meta.tint });
-      }
-      card.eventMode = 'static';
-      card.cursor = 'pointer';
-      card.on('pointertap', () => onSelect(task.id));
-      stage.addChild(card);
-
-      const text = new Text({ text: meta.icon, style: { fontSize: 16 } });
-      text.anchor.set(0.5);
-      text.position.set(x, y - 6);
-      stage.addChild(text);
-
-      const label = new Text({ text: task.status === 'bloqueado' ? 'DECISIÓN' : task.status === 'resuelto' ? 'OK' : meta.label, style: { fill: '#33220f', fontSize: 8, fontWeight: '900' } });
-      label.anchor.set(0.5);
-      label.position.set(x, y + 11);
-      stage.addChild(label);
-
-      if (task.pauseLabel) {
-        const pause = new Text({ text: task.pauseLabel, style: { fill: '#fff4d6', fontSize: 12, fontWeight: '800', dropShadow: true } });
-        pause.anchor.set(0.5);
-        pause.position.set(x, y - 42);
-        stage.addChild(pause);
-      }
-      if (task.fromOwner) {
-        movingSprites.push({ card, icon: text, label, from: { x, y }, to: { x: pos.x + slotX, y: pos.y + slotY }, started: performance.now() });
-      }
-    });
-
-    if (compositionMode) {
-      const handles: { key: LayoutKey; label: string; x: number; y: number; color: number }[] = [
-        { key: 'salaVera', label: 'suelo Vera', x: leftRoom.x - 8, y: leftRoom.y - 28, color: 0x2f9fd7 },
-        { key: 'paredVeraIzq1', label: 'V izq 1', x: leftRoom.x - 198 + offset('paredVeraIzq1').x, y: leftRoom.y - 26 + offset('paredVeraIzq1').y, color: 0x8dd7ff },
-        { key: 'paredVeraIzq2', label: 'V izq 2', x: leftRoom.x - 142 + offset('paredVeraIzq2').x, y: leftRoom.y - 74 + offset('paredVeraIzq2').y, color: 0x8dd7ff },
-        { key: 'paredVeraIzq3', label: 'V izq 3', x: leftRoom.x - 86 + offset('paredVeraIzq3').x, y: leftRoom.y - 122 + offset('paredVeraIzq3').y, color: 0x8dd7ff },
-        { key: 'paredVeraFondo1', label: 'V fondo 1', x: leftRoom.x + 76 + offset('paredVeraFondo1').x, y: leftRoom.y - 132 + offset('paredVeraFondo1').y, color: 0x8dd7ff },
-        { key: 'paredVeraFondo2', label: 'V fondo 2', x: leftRoom.x + 136 + offset('paredVeraFondo2').x, y: leftRoom.y - 98 + offset('paredVeraFondo2').y, color: 0x8dd7ff },
-        { key: 'salaCris', label: 'suelo Cris', x: rightRoom.x + 4, y: rightRoom.y - 40, color: 0xffa94d },
-        { key: 'paredCrisIzq1', label: 'C izq 1', x: rightRoom.x - 198 + offset('paredCrisIzq1').x, y: rightRoom.y - 42 + offset('paredCrisIzq1').y, color: 0xffca7a },
-        { key: 'paredCrisIzq2', label: 'C izq 2', x: rightRoom.x - 142 + offset('paredCrisIzq2').x, y: rightRoom.y - 90 + offset('paredCrisIzq2').y, color: 0xffca7a },
-        { key: 'paredCrisIzq3', label: 'C izq 3', x: rightRoom.x - 86 + offset('paredCrisIzq3').x, y: rightRoom.y - 138 + offset('paredCrisIzq3').y, color: 0xffca7a },
-        { key: 'paredCrisFondo1', label: 'C fondo 1', x: rightRoom.x + 82 + offset('paredCrisFondo1').x, y: rightRoom.y - 150 + offset('paredCrisFondo1').y, color: 0xffca7a },
-        { key: 'paredCrisFondo2', label: 'C fondo 2', x: rightRoom.x + 146 + offset('paredCrisFondo2').x, y: rightRoom.y - 112 + offset('paredCrisFondo2').y, color: 0xffca7a },
-        { key: 'paredCrisFondo3', label: 'C fondo 3', x: rightRoom.x + 210 + offset('paredCrisFondo3').x, y: rightRoom.y - 74 + offset('paredCrisFondo3').y, color: 0xffca7a },
-        { key: 'entrada', label: 'entrada', x: positions.entrada.x, y: positions.entrada.y, color: 0xf4c542 },
-        { key: 'decisiones', label: 'decisiones', x: positions.decision.x, y: positions.decision.y, color: 0xff5d5d },
-        { key: 'vera', label: 'Vera', x: positions.vera.x - 18, y: positions.vera.y + 34, color: 0x8dd7ff },
-        { key: 'cris', label: 'Cris', x: positions.cris.x - 10, y: positions.cris.y + 38, color: 0xffca7a },
-        { key: 'muebleRecepcion', label: 'mueble recepción', x: positions.entrada.x + 16 + offset('muebleRecepcion').x, y: positions.entrada.y + 18 + offset('muebleRecepcion').y, color: 0xffffff },
-        { key: 'mesaVera', label: 'mesa Vera', x: positions.vera.x + 4 + offset('mesaVera').x, y: positions.vera.y + 32 + offset('mesaVera').y, color: 0xffffff },
-        { key: 'mesaCris', label: 'mesa Cris', x: positions.cris.x + 18 + offset('mesaCris').x, y: positions.cris.y + 34 + offset('mesaCris').y, color: 0xffffff },
-        { key: 'sillonDecision', label: 'mueble decisión', x: positions.decision.x - 10 + offset('sillonDecision').x, y: positions.decision.y + 58 + offset('sillonDecision').y, color: 0xffffff },
-      ];
-      handles.forEach((handle) => {
-        const hit = new Container();
-        hit.position.set(handle.x, handle.y);
-        hit.eventMode = 'static';
-        hit.cursor = 'grab';
-        const halo = new Graphics();
-        halo.circle(0, 0, 14).fill({ color: handle.color, alpha: 0.24 }).stroke({ width: 3, color: handle.color, alpha: 0.95 });
-        hit.addChild(halo);
-        const label = new Text({ text: handle.label, style: { fill: '#ffffff', fontSize: 10, fontWeight: '900', dropShadow: true } });
-        label.anchor.set(0.5);
-        label.position.set(0, -24);
-        hit.addChild(label);
-        let dragStart: { x: number; y: number; ox: number; oy: number } | null = null;
-        let nextPoint: LayoutPoint | null = null;
-        const commitDrag = () => {
-          hit.cursor = 'grab';
-          if (nextPoint) {
-            onLayoutChange(cleanLayout({ ...compositionLayout, [handle.key]: nextPoint }));
-          }
-          dragStart = null;
-          nextPoint = null;
-        };
-        hit.on('pointerdown', (event: any) => {
-          hit.cursor = 'grabbing';
-          const global = event.global;
-          const current = offset(handle.key);
-          dragStart = { x: global.x, y: global.y, ox: current.x, oy: current.y };
-          nextPoint = current;
-        });
-        hit.on('pointerup', commitDrag);
-        hit.on('pointerupoutside', commitDrag);
-        hit.on('pointermove', (event: any) => {
-          if (!dragStart) return;
-          const global = event.global;
-          const dx = Math.round(global.x - dragStart.x);
-          const dy = Math.round(global.y - dragStart.y);
-          nextPoint = { x: dragStart.ox + dx, y: dragStart.oy + dy };
-          hit.position.set(handle.x + dx, handle.y + dy);
-        });
-        stage.addChild(hit);
-      });
-    }
-
-    const flowDot = new Graphics();
-    flowDot.circle(0, 0, 6).fill({ color: 0xfff0be, alpha: 0.9 }).stroke({ width: 2, color: 0xffffff, alpha: 0.8 });
-    stage.addChild(flowDot);
-
-    app.ticker.add(() => {
-      const t = performance.now();
-      agentBodies.forEach(({ body, glow, active, baseX, baseY, baseScale, phase }) => {
-        const idle = Math.sin(t / 260 + phase);
-        const work = Math.sin(t / 95 + phase);
-        body.x = baseX + idle * 1.2;
-        body.y = baseY + idle * 3.2 + (active ? work * 3.8 : 0);
-        body.rotation = Math.sin(t / 360 + phase) * 0.025 + (active ? Math.sin(t / 140 + phase) * 0.018 : 0);
-        body.scale.set(1 + Math.sin(t / 310 + phase) * 0.025);
-        glow.alpha = active ? 0.85 + Math.sin(t / 120 + phase) * 0.15 : 0.48 + Math.sin(t / 420 + phase) * 0.12;
-        glow.scale.set(active ? 1.08 + Math.sin(t / 150 + phase) * 0.08 : 1 + Math.sin(t / 520 + phase) * 0.05);
-      });
-      const route = [positions.entrada, positions.vera, positions.cris, positions.decision];
-      const loop = (t / 1800) % 3;
-      const seg = Math.floor(loop);
-      const local = loop - seg;
-      const a = route[seg];
-      const b = route[seg + 1];
-      const eased = 0.5 - Math.cos(local * Math.PI) / 2;
-      flowDot.position.set(a.x + (b.x - a.x) * eased, a.y + 18 + (b.y - a.y) * eased + Math.sin(local * Math.PI) * -22);
-      flowDot.alpha = 0.35 + Math.sin(t / 180) * 0.25;
-      movingSprites.forEach((sprite) => {
-        const progress = Math.min(1, (t - sprite.started) / 820);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        const x = sprite.from.x + (sprite.to.x - sprite.from.x) * eased;
-        const y = sprite.from.y + (sprite.to.y - sprite.from.y) * eased + Math.sin(progress * Math.PI) * -18;
-        sprite.card.position.set(x - sprite.from.x, y - sprite.from.y);
-        sprite.icon.position.set(x, y - 6);
-        sprite.label.position.set(x, y + 11);
-      });
-    });
-  });
-
-  return () => {
-    destroyed = true;
-    app.destroy(true, { children: true });
-  };
+function ownerRoute(owner: Owner): Tile {
+  return zones[owner];
 }
 
 function describeEvent(task: OfficeTask) {
@@ -572,24 +162,242 @@ function nextStatus(task: OfficeTask): OfficeTask {
   if (task.owner === 'entrada') return { ...task, fromOwner: 'entrada', reactingOwner: 'vera', pauseLabel: 'clasificando…', owner: 'vera', status: 'trabajando', detail: 'Vera está clasificando el mensaje.' };
   if (task.owner === 'vera') return { ...task, fromOwner: 'vera', reactingOwner: 'cris', pauseLabel: 'derivando…', owner: 'cris', status: 'trabajando', detail: 'Cris ejecuta diagnóstico técnico.' };
   if (task.owner === 'cris') {
-    const blocked = task.id % 3 === 0;
-    return { ...task, fromOwner: 'cris', reactingOwner: blocked ? 'decision' : 'cris', pauseLabel: blocked ? 'bloqueado' : 'resuelto', owner: blocked ? 'decision' : 'cris', status: blocked ? 'bloqueado' : 'resuelto', detail: blocked ? 'Necesita decisión humana de David.' : 'Cris dejó la tarea resuelta.' };
+    const blockedTask = task.id % 3 === 0;
+    return { ...task, fromOwner: 'cris', reactingOwner: blockedTask ? 'decision' : 'cris', pauseLabel: blockedTask ? 'bloqueado' : 'resuelto', owner: blockedTask ? 'decision' : 'cris', status: blockedTask ? 'bloqueado' : 'resuelto', detail: blockedTask ? 'Necesita decisión humana de David.' : 'Cris dejó la tarea resuelta.' };
   }
   return { ...task, fromOwner: 'decision', reactingOwner: 'decision', pauseLabel: 'cerrado', status: 'resuelto', detail: 'David tomó la decisión y la tarea queda cerrada.' };
 }
 
+function drawSprite(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, dir: Direction, frame: number, alpha = 1) {
+  const row = dir === 'down' ? 0 : dir === 'up' ? 1 : 2;
+  const sourceFrame = frame % 7;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.imageSmoothingEnabled = false;
+  if (dir === 'left') {
+    ctx.translate(Math.round(x), Math.round(y));
+    ctx.scale(-1, 1);
+    ctx.drawImage(img, sourceFrame * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, -FRAME_W * FRAME_SCALE / 2, -FRAME_H * FRAME_SCALE + 12, FRAME_W * FRAME_SCALE, FRAME_H * FRAME_SCALE);
+  } else {
+    ctx.drawImage(img, sourceFrame * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, Math.round(x - FRAME_W * FRAME_SCALE / 2), Math.round(y - FRAME_H * FRAME_SCALE + 12), FRAME_W * FRAME_SCALE, FRAME_H * FRAME_SCALE);
+  }
+  ctx.restore();
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, tasks: OfficeTask[], selectedId: number | null, onSelect: (id: number) => void) {
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    let disposed = false;
+    let raf = 0;
+
+    Promise.all([
+      loadImage('/assets/pixel-agents/characters/vera.png'),
+      loadImage('/assets/pixel-agents/characters/cris.png'),
+      loadImage('/assets/pixel-agents/furniture/desk_front.png'),
+      loadImage('/assets/pixel-agents/furniture/pc_on.png'),
+      loadImage('/assets/pixel-agents/furniture/chair_front.png'),
+      loadImage('/assets/pixel-agents/furniture/plant.png'),
+      loadImage('/assets/pixel-agents/furniture/whiteboard.png'),
+      loadImage('/assets/pixel-agents/floors/floor_0.png'),
+    ]).then(([veraImg, crisImg, deskImg, pcImg, chairImg, plantImg, whiteboardImg, floorImg]) => {
+      if (disposed) return;
+      const ctx = canvas.getContext('2d')!;
+      const dpr = window.devicePixelRatio || 1;
+      const sceneW = layout.cols * TILE;
+      const sceneH = layout.rows * TILE;
+      canvas.width = sceneW * dpr;
+      canvas.height = sceneH * dpr;
+      canvas.style.width = `${sceneW}px`;
+      canvas.style.height = `${sceneH}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const activeOwners = new Set(tasks.flatMap((task) => [task.reactingOwner, task.status === 'trabajando' || task.status === 'bloqueado' ? task.owner : undefined]).filter(Boolean) as Owner[]);
+      const mainTask = tasks.find((task) => task.id === selectedId) ?? tasks[0];
+      const veraTarget = mainTask.owner === 'entrada' ? zones.entrada : mainTask.owner === 'vera' ? zones.vera : mainTask.owner === 'cris' || mainTask.owner === 'decision' ? zones.cris : zones.vera;
+      const crisTarget = mainTask.owner === 'decision' ? zones.decision : zones.cris;
+      const veraPath = findPath(zones.vera, veraTarget);
+      const crisPath = findPath(zones.cris, crisTarget);
+      const taskPath = mainTask.fromOwner ? findPath(ownerRoute(mainTask.fromOwner), ownerRoute(mainTask.owner)) : [];
+
+      function pointOnPath(start: Tile, path: Tile[], progress: number): { point: Point; dir: Direction; moving: boolean } {
+        if (!path.length) return { point: tileCenter(start), dir: 'down', moving: false };
+        const total = path.length;
+        const exact = Math.min(total - 0.001, Math.max(0, progress * total));
+        const index = Math.floor(exact);
+        const local = exact - index;
+        const fromTile = index === 0 ? start : path[index - 1];
+        const toTile = path[index];
+        const from = tileCenter(fromTile);
+        const to = tileCenter(toTile);
+        return {
+          point: { x: from.x + (to.x - from.x) * local, y: from.y + (to.y - from.y) * local },
+          dir: directionBetween(fromTile, toTile),
+          moving: true,
+        };
+      }
+
+      const draw = (time: number) => {
+        ctx.clearRect(0, 0, sceneW, sceneH);
+        ctx.fillStyle = '#141b29';
+        ctx.fillRect(0, 0, sceneW, sceneH);
+
+        // floors
+        for (let row = 0; row < layout.rows; row++) {
+          for (let col = 0; col < layout.cols; col++) {
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(floorImg, col * TILE, row * TILE, TILE, TILE);
+            ctx.strokeStyle = 'rgba(255,255,255,.035)';
+            ctx.strokeRect(col * TILE, row * TILE, TILE, TILE);
+          }
+        }
+
+        // room zones
+        ctx.fillStyle = 'rgba(47,159,215,.12)';
+        ctx.fillRect(TILE, TILE, 9 * TILE, 11 * TILE);
+        ctx.fillStyle = 'rgba(255,169,77,.12)';
+        ctx.fillRect(11 * TILE, TILE, 10 * TILE, 11 * TILE);
+        ctx.fillStyle = 'rgba(255,224,168,.12)';
+        ctx.fillRect(9 * TILE, 6 * TILE, 4 * TILE, 4 * TILE);
+        ctx.fillStyle = 'rgba(255,93,93,.16)';
+        ctx.fillRect(18 * TILE, 3 * TILE, 3 * TILE, 4 * TILE);
+
+        // walls
+        ctx.fillStyle = '#394a64';
+        for (const item of blocked) {
+          const [col, row] = item.split(':').map(Number);
+          if ((col === layout.veraDesk.col && row === layout.veraDesk.row) || (col === layout.crisDesk.col && row === layout.crisDesk.row) || (col === layout.decision.col && row === layout.decision.row)) continue;
+          ctx.fillRect(col * TILE, row * TILE, TILE, TILE);
+        }
+        ctx.fillStyle = '#60708b';
+        ctx.fillRect(10 * TILE, 6 * TILE, TILE, TILE);
+        ctx.fillRect(10 * TILE, 10 * TILE, TILE, TILE);
+
+        // labels
+        const label = (text: string, x: number, y: number, color: string) => {
+          ctx.fillStyle = color;
+          ctx.font = '700 13px Inter, system-ui';
+          ctx.fillText(text, x, y);
+        };
+        label('Recepción Vera', TILE * 2, TILE * 2.1, '#8dd7ff');
+        label('Pasillo tareas', TILE * 9.2, TILE * 5.6, '#ffe0a8');
+        label('Oficina Cris', TILE * 13, TILE * 2.1, '#ffca7a');
+        label('Decisiones humanas', TILE * 17.4, TILE * 2.6, '#ff8a8a');
+
+        const drawFurniture = (img: HTMLImageElement, tile: Tile, w = TILE * 1.5, h = TILE, yOffset = 0) => {
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(img, tile.col * TILE + TILE / 2 - w / 2, tile.row * TILE + TILE / 2 - h / 2 + yOffset, w, h);
+        };
+        drawFurniture(whiteboardImg, { col: 4, row: 2 }, TILE * 2, TILE * 1.5);
+        drawFurniture(plantImg, { col: 2, row: 3 }, TILE, TILE * 1.5);
+        drawFurniture(deskImg, layout.veraDesk, TILE * 2.2, TILE * 1.45);
+        drawFurniture(chairImg, layout.veraSeat, TILE, TILE * 1.5, 6);
+        drawFurniture(deskImg, layout.crisDesk, TILE * 2.2, TILE * 1.45);
+        drawFurniture(pcImg, { col: layout.crisDesk.col + 1, row: layout.crisDesk.row }, TILE, TILE * 1.5, -12);
+        drawFurniture(chairImg, layout.crisSeat, TILE, TILE * 1.5, 6);
+        drawFurniture(plantImg, { col: 19, row: 10 }, TILE, TILE * 1.5);
+
+        const seconds = time / 1000;
+        const flowProgress = (seconds % 6) / 6;
+        const veraWalkProgress = activeOwners.has('vera') || mainTask.owner !== 'entrada' ? (seconds % 2.6) / 2.6 : 0;
+        const crisWalkProgress = activeOwners.has('decision') ? (seconds % 2.4) / 2.4 : 0;
+        const veraAnim = pointOnPath(zones.vera, veraPath, veraWalkProgress);
+        const crisAnim = pointOnPath(zones.cris, crisPath, crisWalkProgress);
+        const veraState: AgentState = activeOwners.has('vera') ? 'working' : veraAnim.moving ? 'walk' : 'idle';
+        const crisState: AgentState = activeOwners.has('decision') ? 'blocked' : activeOwners.has('cris') ? 'working' : crisAnim.moving ? 'walk' : 'idle';
+
+        const veraFrame = veraAnim.moving ? Math.floor(time / WALK_FRAME_MS) % 4 : veraState === 'working' ? 3 + Math.floor(time / WORK_FRAME_MS) % 2 : 1;
+        const crisFrame = crisAnim.moving ? Math.floor(time / WALK_FRAME_MS) % 4 : crisState === 'working' ? 3 + Math.floor(time / WORK_FRAME_MS) % 2 : 1;
+
+        // task object moving on path
+        tasks.forEach((task, index) => {
+          const target = ownerRoute(task.owner);
+          const path = task.id === mainTask.id && taskPath.length ? taskPath : [];
+          const anim = path.length ? pointOnPath(task.fromOwner ? ownerRoute(task.fromOwner) : target, path, Math.min(1, ((time % 1400) / 1400))) : { point: { x: tileCenter(target).x + (index % 3) * 10 - 10, y: tileCenter(target).y + TILE * 0.45 + Math.floor(index / 3) * 10 }, dir: 'down' as Direction, moving: false };
+          ctx.fillStyle = 'rgba(0,0,0,.25)';
+          ctx.beginPath();
+          ctx.ellipse(anim.point.x, anim.point.y + 13, 18, 6, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = statusColor[task.status];
+          ctx.strokeStyle = selectedId === task.id ? '#ffffff' : 'rgba(255,255,255,.55)';
+          ctx.lineWidth = selectedId === task.id ? 3 : 1;
+          ctx.beginPath();
+          ctx.roundRect(anim.point.x - 18, anim.point.y - 12, 36, 24, 6);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#10151f';
+          ctx.font = '900 10px Inter, system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText(task.status === 'resuelto' ? 'OK' : task.status === 'bloqueado' ? '!' : task.kind === 'bug' ? 'BUG' : 'WA', anim.point.x, anim.point.y + 4);
+          ctx.textAlign = 'start';
+        });
+
+        // agents
+        const agentGlow = (p: Point, color: string, active: boolean) => {
+          ctx.fillStyle = color;
+          ctx.globalAlpha = active ? 0.25 + Math.sin(time / 120) * 0.08 : 0.12;
+          ctx.beginPath();
+          ctx.ellipse(p.x, p.y + 10, 22, 8, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        };
+        agentGlow(veraAnim.point, '#2f9fd7', veraState !== 'idle');
+        drawSprite(ctx, veraImg, veraAnim.point.x, veraAnim.point.y, veraAnim.dir, veraFrame);
+        agentGlow(crisAnim.point, crisState === 'blocked' ? '#ff5d5d' : '#ffca7a', crisState !== 'idle');
+        drawSprite(ctx, crisImg, crisAnim.point.x, crisAnim.point.y, crisAnim.dir, crisFrame);
+
+        const nameTag = (name: string, point: Point, color: string, state: AgentState) => {
+          ctx.fillStyle = 'rgba(8,12,20,.78)';
+          ctx.beginPath();
+          ctx.roundRect(point.x - 42, point.y + 18, 84, 24, 8);
+          ctx.fill();
+          ctx.fillStyle = color;
+          ctx.font = '800 11px Inter, system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText(`${name} · ${state}`, point.x, point.y + 34);
+          ctx.textAlign = 'start';
+        };
+        nameTag('Vera', veraAnim.point, '#8dd7ff', veraState);
+        nameTag('Cris', crisAnim.point, crisState === 'blocked' ? '#ff8a8a' : '#ffca7a', crisState);
+
+        raf = requestAnimationFrame(draw);
+      };
+      raf = requestAnimationFrame(draw);
+    });
+
+    const handleClick = (event: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const hit = tasks.find((task, index) => {
+        const point = tileCenter(ownerRoute(task.owner));
+        return Math.abs(x - (point.x + (index % 3) * 10 - 10)) < 24 && Math.abs(y - (point.y + TILE * 0.45 + Math.floor(index / 3) * 10)) < 24;
+      });
+      if (hit) onSelect(hit.id);
+    };
+    canvas.addEventListener('click', handleClick);
+
+    return () => {
+      disposed = true;
+      cancelAnimationFrame(raf);
+      canvas.removeEventListener('click', handleClick);
+    };
+  }, [canvasRef, tasks, selectedId, onSelect]);
+}
+
 function App() {
-  const sceneRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [tasks, setTasks] = useState<OfficeTask[]>(initialTasks);
   const [selectedId, setSelectedId] = useState<number | null>(1);
-  const [compositionMode, setCompositionMode] = useState(false);
-  const [compositionLayout, setCompositionLayout] = useState<CompositionLayout>(() => {
-    try {
-      return cleanLayout(JSON.parse(window.localStorage.getItem('oficina-composition-layout') || '{}'));
-    } catch {
-      return {};
-    }
-  });
   const [timeline, setTimeline] = useState<TimelineEvent[]>([
     { id: 1, text: 'Entra WhatsApp en recepción', status: 'esperando' as TaskStatus, at: nowTime() },
     { id: 2, text: 'Cris trabaja en bug técnico', status: 'trabajando' as TaskStatus, at: nowTime() },
@@ -597,14 +405,7 @@ function App() {
   ]);
   const selected = useMemo(() => tasks.find((t) => t.id === selectedId) ?? tasks[0], [tasks, selectedId]);
 
-  useEffect(() => {
-    window.localStorage.setItem('oficina-composition-layout', JSON.stringify(cleanLayout(compositionLayout)));
-  }, [compositionLayout]);
-
-  useEffect(() => {
-    if (!sceneRef.current) return;
-    return drawOffice(sceneRef.current, tasks, selectedId, setSelectedId, compositionMode, compositionLayout, setCompositionLayout);
-  }, [tasks, selectedId, compositionMode, compositionLayout]);
+  usePixelOffice(canvasRef, tasks, selectedId, setSelectedId);
 
   function advance() {
     const task = tasks.find((item) => item.id === selectedId);
@@ -617,9 +418,8 @@ function App() {
     ].slice(0, 8));
     window.setTimeout(() => {
       setTasks((current) => current.map((item) => item.id === task.id ? { ...item, fromOwner: undefined, reactingOwner: undefined, pauseLabel: undefined } : item));
-    }, 900);
+    }, 1200);
   }
-
 
   function startWhatsAppFlow() {
     const id = Date.now();
@@ -629,30 +429,18 @@ function App() {
       { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'trabajando', fromOwner: 'vera', reactingOwner: 'cris', pauseLabel: 'diagnosticando…', owner: 'cris', detail: 'Vera lo deriva a Cris para resolución técnica.' },
       { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'resuelto', fromOwner: 'cris', reactingOwner: 'cris', pauseLabel: 'resuelto', owner: 'cris', detail: 'Cris termina la tarea y deja tarjeta verde.' },
     ];
-    const notes = [
-      'Entra WhatsApp automático en recepción',
-      'Vera recoge y clasifica el WhatsApp',
-      'Vera deriva la tarea a Cris',
-      'Cris resuelve y deja tarjeta verde',
-    ];
+    const notes = ['Entra WhatsApp automático en recepción', 'Vera recoge y clasifica el WhatsApp', 'Vera deriva la tarea a Cris', 'Cris resuelve y deja tarjeta verde'];
     setSelectedId(id);
     flow.forEach((snapshot, step) => {
       window.setTimeout(() => {
-        setTasks((current) => {
-          const exists = current.some((task) => task.id === id);
-          return exists ? current.map((task) => task.id === id ? snapshot : task) : [...current, snapshot];
-        });
-        setTimeline((current) => [
-          { id: Date.now() + step, text: notes[step], status: snapshot.status, at: nowTime() },
-          ...current,
-        ].slice(0, 8));
+        setTasks((current) => current.some((task) => task.id === id) ? current.map((task) => task.id === id ? snapshot : task) : [...current, snapshot]);
+        setTimeline((current) => [{ id: Date.now() + step, text: notes[step], status: snapshot.status, at: nowTime() }, ...current].slice(0, 8));
         window.setTimeout(() => {
           setTasks((current) => current.map((task) => task.id === id ? { ...task, fromOwner: undefined, reactingOwner: undefined, pauseLabel: undefined } : task));
-        }, 950);
-      }, step * 1250);
+        }, 1200);
+      }, step * 1400);
     });
   }
-
 
   function startBlockedFlow() {
     const id = Date.now();
@@ -662,81 +450,35 @@ function App() {
       { id, title: 'WhatsApp bloqueado', kind: 'whatsapp', status: 'trabajando', fromOwner: 'vera', reactingOwner: 'cris', pauseLabel: 'diagnosticando…', owner: 'cris', detail: 'Cris analiza la tarea, pero falta una decisión de David.' },
       { id, title: 'Necesita decisión', kind: 'decision', status: 'bloqueado', fromOwner: 'cris', reactingOwner: 'decision', pauseLabel: 'necesita decisión', owner: 'decision', detail: 'Bloqueado: necesita decisión de David antes de continuar.' },
     ];
-    const notes = [
-      'Entra tarea que puede bloquearse',
-      'Vera clasifica la tarea',
-      'Vera deriva a Cris',
-      'Cris bloquea: necesita decisión de David',
-    ];
+    const notes = ['Entra tarea que puede bloquearse', 'Vera clasifica la tarea', 'Vera deriva a Cris', 'Cris bloquea: necesita decisión de David'];
     setSelectedId(id);
     flow.forEach((snapshot, step) => {
       window.setTimeout(() => {
-        setTasks((current) => {
-          const exists = current.some((task) => task.id === id);
-          return exists ? current.map((task) => task.id === id ? snapshot : task) : [...current, snapshot];
-        });
-        setTimeline((current) => [
-          { id: Date.now() + step, text: notes[step], status: snapshot.status, at: nowTime() },
-          ...current,
-        ].slice(0, 8));
+        setTasks((current) => current.some((task) => task.id === id) ? current.map((task) => task.id === id ? snapshot : task) : [...current, snapshot]);
+        setTimeline((current) => [{ id: Date.now() + step, text: notes[step], status: snapshot.status, at: nowTime() }, ...current].slice(0, 8));
         if (step < flow.length - 1) {
           window.setTimeout(() => {
             setTasks((current) => current.map((task) => task.id === id ? { ...task, fromOwner: undefined, reactingOwner: undefined, pauseLabel: undefined } : task));
-          }, 950);
+          }, 1200);
         }
-      }, step * 1250);
+      }, step * 1400);
     });
   }
 
   function addTask(kind: OfficeTask['kind']) {
     const id = Date.now();
     const title = kind === 'whatsapp' ? 'WhatsApp entrante' : kind === 'email' ? 'Email nuevo' : kind === 'bug' ? 'Bug servidor' : 'Decisión pendiente';
-    setTasks((current) => [
-      ...current,
-      { id, title, kind, status: 'esperando', owner: 'entrada', detail: 'Nueva tarea simulada entrando en la oficina.' },
-    ]);
-    setTimeline((current) => [
-      { id, text: `Nueva tarea entra en recepción: ${title}`, status: 'esperando' as TaskStatus, at: nowTime() },
-      ...current,
-    ].slice(0, 8));
+    setTasks((current) => [...current, { id, title, kind, status: 'esperando', owner: 'entrada', detail: 'Nueva tarea simulada entrando en la oficina.' }]);
+    setTimeline((current) => [{ id, text: `Nueva tarea entra en recepción: ${title}`, status: 'esperando' as TaskStatus, at: nowTime() }, ...current].slice(0, 8));
     setSelectedId(id);
-  }
-
-  async function copyLayout() {
-    const json = JSON.stringify(cleanLayout(compositionLayout), null, 2);
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(json);
-      } else {
-        throw new Error('clipboard api unavailable');
-      }
-    } catch {
-      const textarea = document.createElement('textarea');
-      textarea.value = json;
-      textarea.setAttribute('readonly', 'true');
-      textarea.style.position = 'fixed';
-      textarea.style.left = '-9999px';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-    }
-    setTimeline((current) => [
-      { id: Date.now(), text: 'Layout de composición copiado al portapapeles', status: 'resuelto' as TaskStatus, at: nowTime() },
-      ...current,
-    ].slice(0, 8));
-  }
-
-  function resetLayout() {
-    setCompositionLayout({});
   }
 
   return (
     <main className="app">
       <header className="topbar">
         <div>
-          <p className="eyebrow">Demo operativa</p>
-          <h1>Oficina IA · Vera & Cris</h1>
+          <p className="eyebrow">Preview pixel-agents · 4402</p>
+          <h1>Oficina IA · Pixel Agents</h1>
         </div>
         <div className="actions">
           <button onClick={() => addTask('whatsapp')}>+ WhatsApp</button>
@@ -744,13 +486,12 @@ function App() {
           <button onClick={() => addTask('bug')}>+ Bug</button>
           <button className="primary small" onClick={startWhatsAppFlow}>Simular flujo WhatsApp</button>
           <button className="danger small" onClick={startBlockedFlow}>Simular flujo bloqueado</button>
-          <button className={compositionMode ? 'primary small' : 'small'} onClick={() => setCompositionMode((value) => !value)}>Modo composición</button>
-          <button className="small" onClick={copyLayout}>Copiar layout</button>
-          {compositionMode && <button className="small" onClick={resetLayout}>Reset layout</button>}
         </div>
       </header>
       <section className="layout">
-        <div className="scene" ref={sceneRef} />
+        <div className="scene pixel-scene">
+          <canvas ref={canvasRef} />
+        </div>
         <aside className="panel">
           <p className="eyebrow">Tarea seleccionada</p>
           <h2>{selected?.title ?? 'Sin tarea'}</h2>
@@ -766,18 +507,8 @@ function App() {
             </>
           )}
           <hr />
-          <p className="eyebrow">Consola natural</p>
-          <input placeholder="Ej: Cris, prioriza esto" onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              const instruction = e.currentTarget.value;
-              setTasks((current) => current.map((task) => task.id === selectedId ? { ...task, status: 'trabajando', detail: `Instrucción recibida: ${instruction}` } : task));
-              setTimeline((current) => [
-                { id: Date.now(), text: `Instrucción: ${instruction}`, status: 'trabajando' as TaskStatus, at: nowTime() },
-                ...current,
-              ].slice(0, 8));
-              e.currentTarget.value = '';
-            }
-          }} />
+          <p className="eyebrow">Qué prueba esta rama</p>
+          <p>Personajes animados por frames, rutas por tiles y estados visuales separados del flujo verde/rojo.</p>
           <section className="legend">
             <p className="eyebrow">Leyenda</p>
             {(['esperando', 'trabajando', 'bloqueado', 'resuelto'] as TaskStatus[]).map((status) => (
@@ -793,7 +524,7 @@ function App() {
               </article>
             ))}
           </section>
-          <p className="hint">Primer objetivo: entender la operación en 30 segundos, sin leer logs.</p>
+          <p className="hint">MVP separado: no toca main ni visual-room. Sirve para comparar si Pixel Agents gana como dirección.</p>
         </aside>
       </section>
     </main>

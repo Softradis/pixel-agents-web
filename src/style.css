@@ -49,3 +49,6 @@ button.small { width: auto; margin-top: 0; padding-inline: 14px; }
 
 button.danger { background: #d94141; border: 0; font-weight: 800; }
 button.danger:hover { background: #ef5555; }
+
+.pixel-scene { display: grid; place-items: center; overflow: auto; padding: 18px; }
+.pixel-scene canvas { image-rendering: pixelated; border-radius: 18px; box-shadow: 0 18px 60px rgba(0,0,0,.35); max-width: 100%; height: auto; background: #141b29; }

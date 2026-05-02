@@ -70,3 +70,20 @@ Verificado localmente contra el zip canónico descargado desde itch:
 - No subir RAR, `.aseprite`, samples completos ni animaciones no usadas si no aportan al runtime.
 - No mezclar una tercera fuente sin documentar licencia y decisión previa.
 - Si un asset complica la lectura del flujo verde/rojo, no entra.
+
+## Pixel Agents prototype assets
+
+Subset copied for the experimental `pixel-agents` branch from:
+
+- Repository: https://github.com/pablodelucca/pixel-agents
+- Repository license observed: MIT (`LICENSE`, Copyright 2026 Pablo De Lucca)
+- Character source referenced by upstream: JIK-A-4 MetroCity Free Top Down Character Pack
+- MetroCity license observed on itch.io: Creative Commons Zero v1.0 Universal (CC0)
+
+Copied subset:
+
+- `public/assets/pixel-agents/characters/vera.png`
+- `public/assets/pixel-agents/characters/cris.png`
+- selected furniture/floor sprites under `public/assets/pixel-agents/`
+
+Use is experimental and isolated to the `pixel-agents` branch/preview until the visual direction is validated.
