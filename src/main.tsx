@@ -76,13 +76,13 @@ const initialTasks: OfficeTask[] = [
 const layout = {
   cols: 24,
   rows: 15,
-  entrada: { col: 3, row: 11 },
-  veraDesk: { col: 5, row: 8 },
-  veraSeat: { col: 5, row: 9 },
-  corridor: { col: 11, row: 8 },
-  crisDesk: { col: 17, row: 8 },
-  crisSeat: { col: 17, row: 9 },
-  decision: { col: 21, row: 4 },
+  entrada: { col: 17, row: 3 },
+  veraDesk: { col: 6, row: 8 },
+  veraSeat: { col: 6, row: 9 },
+  corridor: { col: 11, row: 7 },
+  crisDesk: { col: 17, row: 10 },
+  crisSeat: { col: 17, row: 11 },
+  decision: { col: 21, row: 10 },
 };
 
 const zones = {
@@ -93,11 +93,15 @@ const zones = {
 } satisfies Record<Owner, Tile>;
 
 const blocked = new Set<string>([
-  // outer walls only: inner separation is visual, not a hard maze.
+  // outer walls
   ...Array.from({ length: layout.cols }, (_, col) => `${col}:0`),
   ...Array.from({ length: layout.cols }, (_, col) => `${col}:${layout.rows - 1}`),
   ...Array.from({ length: layout.rows }, (_, row) => `0:${row}`),
   ...Array.from({ length: layout.rows }, (_, row) => `${layout.cols - 1}:${row}`),
+  // room partitions: right side split into system room and Cris/decision room, with open door gaps.
+  ...Array.from({ length: 3 }, (_, i) => `${15 + i}:6`),
+  ...Array.from({ length: 3 }, (_, i) => `${20 + i}:6`),
+  '12:1', '12:2', '12:3', '12:4', '12:5', '12:10', '12:11', '12:12', '12:13',
   // desks and decision furniture block walking
   `${layout.veraDesk.col}:${layout.veraDesk.row}`,
   `${layout.crisDesk.col}:${layout.crisDesk.row}`,
@@ -259,54 +263,81 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
           }
         }
 
-        // room zones: one continuous office with a readable central hallway.
-        ctx.fillStyle = 'rgba(47,159,215,.13)';
-        ctx.fillRect(TILE, TILE, 8 * TILE, 12 * TILE);
-        ctx.fillStyle = 'rgba(255,224,168,.13)';
-        ctx.fillRect(9 * TILE, TILE, 4 * TILE, 12 * TILE);
-        ctx.fillStyle = 'rgba(255,169,77,.13)';
-        ctx.fillRect(13 * TILE, TILE, 10 * TILE, 12 * TILE);
-        ctx.fillStyle = 'rgba(255,93,93,.18)';
-        ctx.fillRect(19 * TILE, 2 * TILE, 4 * TILE, 4 * TILE);
+        // Functional zones from the reference: large Vera operations, system room, Cris/decision room.
+        ctx.fillStyle = '#8f6332';
+        ctx.fillRect(TILE, TILE, 11 * TILE, 13 * TILE);
+        ctx.fillStyle = '#d7d2c7';
+        ctx.fillRect(13 * TILE, TILE, 10 * TILE, 5 * TILE);
+        ctx.fillStyle = '#437493';
+        ctx.fillRect(13 * TILE, 7 * TILE, 10 * TILE, 7 * TILE);
+        ctx.fillStyle = '#6b2b32';
+        ctx.fillRect(19 * TILE, 8 * TILE, 4 * TILE, 5 * TILE);
 
-        // walls: outer shell plus soft glass partitions with real door gaps.
-        ctx.fillStyle = '#394a64';
+        // tile tint grid per room, clearer than the previous translucent overlay
+        ctx.strokeStyle = 'rgba(255,255,255,.08)';
+        for (let col = 1; col < layout.cols - 1; col++) {
+          for (let row = 1; row < layout.rows - 1; row++) ctx.strokeRect(col * TILE, row * TILE, TILE, TILE);
+        }
+
+        // walls: real rooms with clean door openings.
+        ctx.fillStyle = '#202838';
         ctx.fillRect(0, 0, layout.cols * TILE, TILE);
         ctx.fillRect(0, (layout.rows - 1) * TILE, layout.cols * TILE, TILE);
         ctx.fillRect(0, 0, TILE, layout.rows * TILE);
         ctx.fillRect((layout.cols - 1) * TILE, 0, TILE, layout.rows * TILE);
-        ctx.fillStyle = 'rgba(96,112,139,.82)';
-        ctx.fillRect(9 * TILE - 4, TILE, 8, 5 * TILE);
-        ctx.fillRect(9 * TILE - 4, 10 * TILE, 8, 3 * TILE);
-        ctx.fillRect(13 * TILE - 4, TILE, 8, 5 * TILE);
-        ctx.fillRect(13 * TILE - 4, 10 * TILE, 8, 3 * TILE);
-        ctx.fillStyle = 'rgba(255,255,255,.18)';
-        ctx.fillRect(9 * TILE - 4, 6 * TILE, 8, 4 * TILE);
-        ctx.fillRect(13 * TILE - 4, 6 * TILE, 8, 4 * TILE);
+        ctx.fillRect(12 * TILE, TILE, TILE, 5 * TILE);
+        ctx.fillRect(12 * TILE, 10 * TILE, TILE, 4 * TILE);
+        ctx.fillRect(15 * TILE, 6 * TILE, 3 * TILE, TILE);
+        ctx.fillRect(20 * TILE, 6 * TILE, 3 * TILE, TILE);
+        ctx.fillStyle = '#394a64';
+        ctx.fillRect(12 * TILE, 6 * TILE, TILE, 4 * TILE); // vertical doorway / shared passage
+        ctx.fillRect(13 * TILE, 6 * TILE, 2 * TILE, TILE); // doorway to system room
+        ctx.fillRect(18 * TILE, 6 * TILE, 2 * TILE, TILE); // doorway to Cris/decision room
 
         // labels
         const label = (text: string, x: number, y: number, color: string) => {
+          ctx.fillStyle = 'rgba(8,12,20,.62)';
+          ctx.beginPath();
+          ctx.roundRect(x - 7, y - 16, text.length * 7.2 + 14, 22, 7);
+          ctx.fill();
           ctx.fillStyle = color;
           ctx.font = '800 13px Inter, system-ui';
           ctx.fillText(text, x, y);
         };
-        label('Recepción Vera', TILE * 2.1, TILE * 2.05, '#8dd7ff');
-        label('Pasillo de tareas', TILE * 9.25, TILE * 2.05, '#ffe0a8');
-        label('Oficina Cris', TILE * 14.1, TILE * 2.05, '#ffca7a');
-        label('Decisiones humanas', TILE * 19.1, TILE * 2.05, '#ff8a8a');
+        label('Operación / Recepción Vera', TILE * 1.7, TILE * 2.05, '#fff2cf');
+        label('Entrada · Sistema · Tareas', TILE * 13.5, TILE * 2.05, '#243047');
+        label('Oficina Cris', TILE * 13.6, TILE * 8.05, '#d8f1ff');
+        label('Decisiones humanas', TILE * 19.1, TILE * 8.05, '#ffe0e0');
 
         const drawFurniture = (img: HTMLImageElement, tile: Tile, w = TILE * 1.5, h = TILE, yOffset = 0) => {
           ctx.imageSmoothingEnabled = false;
           ctx.drawImage(img, tile.col * TILE + TILE / 2 - w / 2, tile.row * TILE + TILE / 2 - h / 2 + yOffset, w, h);
         };
-        drawFurniture(whiteboardImg, { col: 4, row: 3 }, TILE * 2, TILE * 1.5);
-        drawFurniture(plantImg, { col: 2, row: 4 }, TILE, TILE * 1.5);
+        // Vera operations: aligned desks and wall furniture, with clean aisles.
+        drawFurniture(whiteboardImg, { col: 4, row: 2 }, TILE * 2, TILE * 1.5);
+        drawFurniture(whiteboardImg, { col: 8, row: 2 }, TILE * 2, TILE * 1.5);
+        drawFurniture(plantImg, { col: 2, row: 3 }, TILE, TILE * 1.5);
+        drawFurniture(plantImg, { col: 10, row: 12 }, TILE, TILE * 1.5);
+        drawFurniture(deskImg, { col: 4, row: 6 }, TILE * 2.2, TILE * 1.45);
+        drawFurniture(chairImg, { col: 4, row: 7 }, TILE, TILE * 1.5, 6);
         drawFurniture(deskImg, layout.veraDesk, TILE * 2.2, TILE * 1.45);
         drawFurniture(chairImg, layout.veraSeat, TILE, TILE * 1.5, 6);
+        drawFurniture(deskImg, { col: 8, row: 6 }, TILE * 2.2, TILE * 1.45);
+        drawFurniture(chairImg, { col: 8, row: 7 }, TILE, TILE * 1.5, 6);
+
+        // System / incoming tasks: furniture against walls, center left empty for movement.
+        drawFurniture(pcImg, { col: 15, row: 3 }, TILE, TILE * 1.5, -6);
+        drawFurniture(whiteboardImg, { col: 17, row: 3 }, TILE * 1.8, TILE * 1.3);
+        drawFurniture(plantImg, { col: 21, row: 4 }, TILE, TILE * 1.5);
+
+        // Cris + decisions: office furniture aligned, decision zone as real room.
+        drawFurniture(whiteboardImg, { col: 15, row: 8 }, TILE * 2, TILE * 1.5);
         drawFurniture(deskImg, layout.crisDesk, TILE * 2.2, TILE * 1.45);
         drawFurniture(pcImg, { col: layout.crisDesk.col + 1, row: layout.crisDesk.row }, TILE, TILE * 1.5, -12);
         drawFurniture(chairImg, layout.crisSeat, TILE, TILE * 1.5, 6);
-        drawFurniture(plantImg, { col: 21, row: 11 }, TILE, TILE * 1.5);
+        drawFurniture(deskImg, layout.decision, TILE * 1.9, TILE * 1.35);
+        drawFurniture(chairImg, { col: 21, row: 11 }, TILE, TILE * 1.5, 6);
+        drawFurniture(plantImg, { col: 22, row: 13 }, TILE, TILE * 1.5);
 
         const seconds = time / 1000;
         const flowProgress = (seconds % 6) / 6;
