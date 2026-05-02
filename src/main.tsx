@@ -107,7 +107,7 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
   const app = new Application();
   let destroyed = false;
 
-  app.init({ resizeTo: canvas, background: '#07111f', antialias: true }).then(() => {
+  app.init({ resizeTo: canvas, background: '#10151f', antialias: true }).then(() => {
     if (destroyed) {
       app.destroy(true);
       return;
@@ -121,92 +121,132 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     const root = new Graphics();
     stage.addChild(root);
     const cx = app.renderer.width / 2;
-    const cy = app.renderer.height / 2 + 40;
+    const cy = app.renderer.height / 2 + 90;
 
-    isoTile(root, cx - 210, cy - 90, 220, 120, 0x12334d);
-    isoTile(root, cx + 40, cy - 90, 220, 120, 0x17324a);
-    isoTile(root, cx - 85, cy + 65, 260, 130, 0x102a3f);
-    isoTile(root, cx + 190, cy + 65, 210, 105, 0x2b213d);
+    // Habitación continua, no zonas flotantes.
+    const floor = new Graphics();
+    floor.poly([
+      cx, cy - 245,
+      cx + 420, cy - 35,
+      cx + 300, cy + 205,
+      cx - 420, cy + 205,
+      cx - 520, cy - 20,
+    ]).fill(0xd8b77b).stroke({ width: 4, color: 0x6c4b2d, alpha: 0.75 });
+    stage.addChild(floor);
 
-    addIsoAsset(stage, 'floorCarpet_N.png', cx - 210, cy - 58, 0.7, 0.9);
-    addIsoAsset(stage, 'floorCarpet_S.png', cx + 40, cy - 58, 0.7, 0.9);
-    addIsoAsset(stage, 'longTableDecoratedChairsBooks_N.png', cx + 40, cy - 40, 0.62);
-    addIsoAsset(stage, 'bookcaseWideBooks_N.png', cx + 42, cy - 124, 0.55);
-    addIsoAsset(stage, 'longTableChairs_W.png', cx - 210, cy - 40, 0.58);
-    addIsoAsset(stage, 'bookStand_N.png', cx - 116, cy + 80, 0.55);
-    addIsoAsset(stage, 'displayCaseOpen_N.png', cx + 190, cy + 74, 0.58);
+    // Alfombras/caminos integrados en el suelo.
+    addIsoAsset(stage, 'floorCarpet_N.png', cx - 205, cy + 40, 0.85, 0.95);
+    addIsoAsset(stage, 'floorCarpet_S.png', cx + 75, cy + 30, 0.85, 0.95);
+    addIsoAsset(stage, 'floorCarpet_W.png', cx + 270, cy + 95, 0.72, 0.92);
 
-    addZoneBadge(stage, 'Recepción', 'Vera clasifica', cx - 210, cy - 165, 0x8dd7ff);
-    addZoneBadge(stage, 'Mesa técnica', 'Cris resuelve', cx + 40, cy - 165, 0xffca7a);
-    addZoneBadge(stage, 'Entrada', 'tareas nuevas', cx - 85, cy - 15, 0xf4c542);
-    addZoneBadge(stage, 'Decisiones', 'David desbloquea', cx + 190, cy + 5, 0xff5d5d);
+    // Paredes y biblioteca para dar sensación de sala.
+    addIsoAsset(stage, 'wallBooks_N.png', cx - 170, cy - 168, 0.78);
+    addIsoAsset(stage, 'wallBooks_N.png', cx + 15, cy - 170, 0.78);
+    addIsoAsset(stage, 'wallBooks_E.png', cx + 245, cy - 75, 0.78);
+    addIsoAsset(stage, 'bookcaseWideBooks_N.png', cx - 300, cy - 105, 0.68);
+    addIsoAsset(stage, 'bookcaseWideBooks_E.png', cx + 330, cy - 5, 0.66);
 
     const positions: Record<Owner, { x: number; y: number }> = {
-      entrada: { x: cx - 85, y: cy + 55 },
-      vera: { x: cx - 210, y: cy - 65 },
-      cris: { x: cx + 40, y: cy - 65 },
-      decision: { x: cx + 190, y: cy + 55 },
+      entrada: { x: cx - 300, y: cy + 78 },
+      vera: { x: cx - 150, y: cy + 8 },
+      cris: { x: cx + 95, y: cy + 8 },
+      decision: { x: cx + 290, y: cy + 95 },
     };
 
+    // Mobiliario real de cada zona.
+    addIsoAsset(stage, 'bookStand_N.png', positions.entrada.x, positions.entrada.y + 25, 0.72);
+    addIsoAsset(stage, 'longTableChairs_W.png', positions.vera.x, positions.vera.y + 30, 0.72);
+    addIsoAsset(stage, 'longTableDecoratedChairsBooks_N.png', positions.cris.x, positions.cris.y + 30, 0.72);
+    addIsoAsset(stage, 'displayCaseOpen_N.png', positions.decision.x, positions.decision.y + 28, 0.7);
+
+    // Caminos sutiles: narrativa, no UI de dashboard.
     const paths = new Graphics();
     const pathPairs: [Owner, Owner][] = [['entrada', 'vera'], ['vera', 'cris'], ['cris', 'decision']];
     pathPairs.forEach(([from, to]) => {
       paths.moveTo(positions[from].x, positions[from].y);
       paths.lineTo(positions[to].x, positions[to].y);
     });
-    paths.stroke({ width: 4, color: 0x8fb5d9, alpha: 0.22 });
+    paths.stroke({ width: 4, color: 0x6c4b2d, alpha: 0.25 });
     stage.addChild(paths);
 
     const activeOwners = new Set(tasks.flatMap((task) => [task.reactingOwner, task.status === 'trabajando' || task.status === 'bloqueado' ? task.owner : undefined]).filter(Boolean) as Owner[]);
+
+    if (activeOwners.has('decision')) {
+      const decisionPulse = new Graphics();
+      decisionPulse.poly([
+        positions.decision.x, positions.decision.y - 50,
+        positions.decision.x + 105, positions.decision.y,
+        positions.decision.x, positions.decision.y + 50,
+        positions.decision.x - 105, positions.decision.y,
+      ]).stroke({ width: 5, color: 0xff5d5d, alpha: 0.78 });
+      stage.addChild(decisionPulse);
+    }
+
+    // Etiquetas pequeñas integradas, solo para orientar.
+    const smallLabels = [
+      ['Entrada', positions.entrada.x, positions.entrada.y - 60, 0xf4c542],
+      ['Vera', positions.vera.x, positions.vera.y - 70, 0x8dd7ff],
+      ['Cris', positions.cris.x, positions.cris.y - 70, 0xffca7a],
+      ['Decisiones', positions.decision.x, positions.decision.y - 62, 0xff5d5d],
+    ] as const;
+    smallLabels.forEach(([label, x, y, color]) => {
+      const tag = new Graphics();
+      tag.roundRect(x - 45, y - 14, 90, 28, 10).fill({ color, alpha: 0.68 }).stroke({ width: 1, color: 0xffffff, alpha: 0.35 });
+      stage.addChild(tag);
+      const text = new Text({ text: label, style: { fill: '#ffffff', fontSize: 12, fontWeight: '800' } });
+      text.anchor.set(0.5);
+      text.position.set(x, y + 1);
+      stage.addChild(text);
+    });
+
     const agents = [
-      ['Vera', positions.vera.x, positions.vera.y - 30, 0x8dd7ff, 'vera'],
-      ['Cris', positions.cris.x, positions.cris.y - 30, 0xffca7a, 'cris'],
+      ['Vera', positions.vera.x - 20, positions.vera.y - 10, 0x8dd7ff, 'vera'],
+      ['Cris', positions.cris.x + 15, positions.cris.y - 10, 0xffca7a, 'cris'],
     ] as const;
     const agentBodies: { body: Graphics; active: boolean }[] = [];
     agents.forEach(([name, x, y, color, owner]) => {
       const active = activeOwners.has(owner);
-      const deskAsset = owner === 'vera' ? 'libraryChair_N.png' : 'libraryChair_E.png';
-      addIsoAsset(stage, deskAsset, x + (owner === 'vera' ? -32 : 34), y + 36, 0.42, 0.95);
       const glow = new Graphics();
-      glow.circle(x, y + 12, active ? 36 : 0).fill({ color, alpha: active ? 0.16 : 0 });
+      glow.circle(x, y + 12, active ? 34 : 0).fill({ color, alpha: active ? 0.18 : 0 });
       stage.addChild(glow);
+      addIsoAsset(stage, owner === 'vera' ? 'libraryChair_N.png' : 'libraryChair_E.png', x + (owner === 'vera' ? -18 : 22), y + 46, 0.38, 0.92);
       const body = new Graphics();
       body.circle(x, y - 18, 17).fill(color);
-      body.roundRect(x - 22, y + 1, 44, 36, 12).fill(color).stroke({ width: active ? 4 : 2, color: active ? 0xffffff : 0xffffff, alpha: active ? 0.8 : 0.45 });
+      body.roundRect(x - 22, y + 1, 44, 36, 12).fill(color).stroke({ width: active ? 4 : 2, color: 0xffffff, alpha: active ? 0.82 : 0.48 });
       body.circle(x + 7, y - 21, 3).fill(0x07111f);
       body.circle(x - 7, y - 21, 3).fill(0x07111f);
       stage.addChild(body);
       agentBodies.push({ body, active });
-      const role = owner === 'vera' ? 'coordina' : 'técnica';
-      const nameText = new Text({ text: active ? `${name} · ${role} · activo` : `${name} · ${role}`, style: { fill: '#ffffff', fontSize: 13, fontWeight: '700' } });
+      const nameText = new Text({ text: name, style: { fill: '#fff7e6', fontSize: 12, fontWeight: '800' } });
       nameText.anchor.set(0.5);
       nameText.position.set(x, y + 55);
       stage.addChild(nameText);
     });
 
-    if (activeOwners.has('decision')) {
-      const decisionPulse = new Graphics();
-      decisionPulse.roundRect(positions.decision.x - 80, positions.decision.y - 44, 160, 88, 18)
-        .stroke({ width: 5, color: 0xff5d5d, alpha: 0.75 });
-      stage.addChild(decisionPulse);
-    }
-
-    const movingSprites: { card: Graphics; icon: Text; from: { x: number; y: number }; to: { x: number; y: number }; started: number }[] = [];
+    const movingSprites: { card: Graphics; icon: Text; label: Text; from: { x: number; y: number }; to: { x: number; y: number }; started: number }[] = [];
 
     tasks.forEach((task, index) => {
       const pos = positions[task.owner];
-      const slotX = (index % 3) * 34 - 34;
-      const slotY = Math.floor(index / 3) * 32;
+      const slotX = (index % 3) * 30 - 30;
+      const slotY = Math.floor(index / 3) * 28;
       const from = task.fromOwner ? positions[task.fromOwner] : pos;
       const x = (task.fromOwner ? from.x : pos.x) + slotX;
       const y = (task.fromOwner ? from.y : pos.y) + slotY;
-      const shadow = new Graphics();
-      shadow.ellipse(x, y + 18, 42, 10).fill({ color: 0x000000, alpha: 0.18 });
-      stage.addChild(shadow);
       const meta = kindMeta[task.kind];
+
+      const shadow = new Graphics();
+      shadow.ellipse(x, y + 18, 36, 9).fill({ color: 0x000000, alpha: 0.22 });
+      stage.addChild(shadow);
+
+      // Objeto físico pequeño dentro de la habitación.
       const card = new Graphics();
-      card.roundRect(x - 48, y - 25, 96, 50, 12).fill(colors[task.status]).stroke({ width: selectedId === task.id ? 4 : 2, color: selectedId === task.id ? 0xffffff : meta.tint });
-      card.circle(x - 33, y - 13, 8).fill(meta.tint).stroke({ width: 2, color: 0xffffff, alpha: 0.75 });
+      if (task.status === 'bloqueado') {
+        card.roundRect(x - 44, y - 26, 88, 52, 10).fill(0xd34a3f).stroke({ width: selectedId === task.id ? 4 : 2, color: 0xffe0d6 });
+      } else if (task.status === 'resuelto') {
+        card.roundRect(x - 42, y - 24, 84, 48, 10).fill(0x56d364).stroke({ width: selectedId === task.id ? 4 : 2, color: 0xe6ffed });
+      } else {
+        card.roundRect(x - 42, y - 24, 84, 48, 10).fill(0xf0d6a3).stroke({ width: selectedId === task.id ? 4 : 2, color: meta.tint });
+      }
       card.eventMode = 'static';
       card.cursor = 'pointer';
       card.on('pointertap', () => onSelect(task.id));
@@ -214,20 +254,22 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
 
       const text = new Text({ text: meta.icon, style: { fontSize: 22 } });
       text.anchor.set(0.5);
-      text.position.set(x, y - 2);
+      text.position.set(x, y - 6);
       stage.addChild(text);
-      const typeLabel = new Text({ text: task.status === 'bloqueado' ? 'Necesita decisión' : meta.label, style: { fill: '#07111f', fontSize: 10, fontWeight: '900' } });
-      typeLabel.anchor.set(0.5);
-      typeLabel.position.set(x, y + 15);
-      stage.addChild(typeLabel);
+
+      const label = new Text({ text: task.status === 'bloqueado' ? 'DECISIÓN' : task.status === 'resuelto' ? 'OK' : meta.label, style: { fill: '#33220f', fontSize: 10, fontWeight: '900' } });
+      label.anchor.set(0.5);
+      label.position.set(x, y + 15);
+      stage.addChild(label);
+
       if (task.pauseLabel) {
-        const pause = new Text({ text: task.pauseLabel, style: { fill: '#ffffff', fontSize: 12, fontWeight: '700', dropShadow: true } });
+        const pause = new Text({ text: task.pauseLabel, style: { fill: '#fff4d6', fontSize: 12, fontWeight: '800', dropShadow: true } });
         pause.anchor.set(0.5);
-        pause.position.set(x, y - 38);
+        pause.position.set(x, y - 42);
         stage.addChild(pause);
       }
       if (task.fromOwner) {
-        movingSprites.push({ card, icon: text, from: { x, y }, to: { x: pos.x + slotX, y: pos.y + slotY }, started: performance.now() });
+        movingSprites.push({ card, icon: text, label, from: { x, y }, to: { x: pos.x + slotX, y: pos.y + slotY }, started: performance.now() });
       }
     });
 
@@ -237,12 +279,13 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
         body.y = active ? Math.sin(t / 115 + idx) * 4 : 0;
       });
       movingSprites.forEach((sprite) => {
-        const progress = Math.min(1, (t - sprite.started) / 750);
+        const progress = Math.min(1, (t - sprite.started) / 820);
         const eased = 1 - Math.pow(1 - progress, 3);
         const x = sprite.from.x + (sprite.to.x - sprite.from.x) * eased;
         const y = sprite.from.y + (sprite.to.y - sprite.from.y) * eased + Math.sin(progress * Math.PI) * -18;
         sprite.card.position.set(x - sprite.from.x, y - sprite.from.y);
-        sprite.icon.position.set(x, y - 2);
+        sprite.icon.position.set(x, y - 6);
+        sprite.label.position.set(x, y + 15);
       });
     });
   });
