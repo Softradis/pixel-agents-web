@@ -139,12 +139,51 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     addIsoAsset(stage, 'floorCarpet_S.png', cx + 75, cy + 30, 0.85, 0.95);
     addIsoAsset(stage, 'floorCarpet_W.png', cx + 270, cy + 95, 0.72, 0.92);
 
-    // Paredes y biblioteca para dar sensación de sala.
-    addIsoAsset(stage, 'wallBooks_N.png', cx - 170, cy - 168, 0.78);
-    addIsoAsset(stage, 'wallBooks_N.png', cx + 15, cy - 170, 0.78);
-    addIsoAsset(stage, 'wallBooks_E.png', cx + 245, cy - 75, 0.78);
-    addIsoAsset(stage, 'bookcaseWideBooks_N.png', cx - 300, cy - 105, 0.68);
-    addIsoAsset(stage, 'bookcaseWideBooks_E.png', cx + 330, cy - 5, 0.66);
+    // Paredes reales: zócalo + altura visible, antes del mobiliario.
+    const backWall = new Graphics();
+    backWall.poly([
+      cx - 425, cy - 24,
+      cx, cy - 245,
+      cx + 418, cy - 36,
+      cx + 418, cy - 138,
+      cx, cy - 348,
+      cx - 425, cy - 126,
+    ]).fill(0xcaa56c).stroke({ width: 4, color: 0x4f3522, alpha: 0.85 });
+    stage.addChild(backWall);
+
+    const leftWall = new Graphics();
+    leftWall.poly([
+      cx - 520, cy - 20,
+      cx - 425, cy - 24,
+      cx - 425, cy - 126,
+      cx - 520, cy - 122,
+    ]).fill(0xb98e58).stroke({ width: 4, color: 0x4f3522, alpha: 0.85 });
+    stage.addChild(leftWall);
+
+    const rightWall = new Graphics();
+    rightWall.poly([
+      cx + 418, cy - 36,
+      cx + 300, cy + 205,
+      cx + 300, cy + 103,
+      cx + 418, cy - 138,
+    ]).fill(0xb98e58).stroke({ width: 4, color: 0x4f3522, alpha: 0.85 });
+    stage.addChild(rightWall);
+
+    const wallTop = new Graphics();
+    wallTop.poly([
+      cx - 425, cy - 126,
+      cx, cy - 348,
+      cx + 418, cy - 138,
+      cx, cy - 255,
+    ]).fill(0x8f633e).stroke({ width: 3, color: 0x4f3522, alpha: 0.9 });
+    stage.addChild(wallTop);
+
+    // Biblioteca/mobiliario pegado a las paredes para que se lean como sala.
+    addIsoAsset(stage, 'wallBooks_N.png', cx - 185, cy - 170, 0.95);
+    addIsoAsset(stage, 'wallBooks_N.png', cx + 10, cy - 172, 0.95);
+    addIsoAsset(stage, 'wallBooks_E.png', cx + 275, cy - 70, 0.95);
+    addIsoAsset(stage, 'bookcaseWideBooks_N.png', cx - 305, cy - 104, 0.82);
+    addIsoAsset(stage, 'bookcaseWideBooks_E.png', cx + 335, cy - 4, 0.78);
 
     const positions: Record<Owner, { x: number; y: number }> = {
       entrada: { x: cx - 300, y: cy + 78 },
