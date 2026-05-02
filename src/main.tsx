@@ -32,11 +32,27 @@ const statusText: Record<TaskStatus, string> = {
 const initialTasks: OfficeTask[] = [
   {
     id: 1,
-    title: 'WhatsApp nuevo',
+    title: 'WhatsApp entrante',
     kind: 'whatsapp',
     status: 'esperando',
     owner: 'entrada',
-    detail: 'Mensaje entrante en recepción. Vera debe clasificarlo.',
+    detail: 'Mensaje nuevo entrando por recepción. Vera lo recogerá y clasificará.',
+  },
+  {
+    id: 2,
+    title: 'Bug técnico',
+    kind: 'bug',
+    status: 'trabajando',
+    owner: 'cris',
+    detail: 'Incidencia técnica ya derivada a Cris. Está diagnosticando el problema.',
+  },
+  {
+    id: 3,
+    title: 'Tarea resuelta',
+    kind: 'email',
+    status: 'resuelto',
+    owner: 'cris',
+    detail: 'Trabajo terminado: Cris dejó una tarjeta verde de resuelto.',
   },
 ];
 
