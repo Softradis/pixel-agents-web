@@ -7,6 +7,24 @@ type TaskStatus = 'esperando' | 'trabajando' | 'bloqueado' | 'resuelto';
 type Owner = 'entrada' | 'vera' | 'cris' | 'decision';
 type TimelineEvent = { id: number; text: string; status: TaskStatus; at: string };
 
+type LayoutKey = 'salaVera' | 'salaCris' | 'entrada' | 'decisiones' | 'vera' | 'cris' | 'muebleRecepcion' | 'mesaVera' | 'mesaCris' | 'sillonDecision';
+type LayoutPoint = { x: number; y: number };
+type CompositionLayout = Partial<Record<LayoutKey, LayoutPoint>>;
+
+const layoutKeys: LayoutKey[] = ['salaVera', 'salaCris', 'entrada', 'decisiones', 'vera', 'cris', 'muebleRecepcion', 'mesaVera', 'mesaCris', 'sillonDecision'];
+
+function cleanLayout(layout: CompositionLayout): CompositionLayout {
+  const clean: CompositionLayout = {};
+  layoutKeys.forEach((key) => {
+    const point = layout[key];
+    if (!point) return;
+    const x = Math.round(point.x || 0);
+    const y = Math.round(point.y || 0);
+    if (x !== 0 || y !== 0) clean[key] = { x, y };
+  });
+  return clean;
+}
+
 type OfficeTask = {
   id: number;
   title: string;
@@ -111,7 +129,7 @@ function isoTile(g: Graphics, x: number, y: number, w: number, h: number, fill: 
   g.stroke({ width: 2, color: stroke, alpha: 0.75 });
 }
 
-function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: number | null, onSelect: (id: number) => void) {
+function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: number | null, onSelect: (id: number) => void, compositionMode: boolean, compositionLayout: CompositionLayout, onLayoutChange: (layout: CompositionLayout) => void) {
   const app = new Application();
   let destroyed = false;
 
@@ -135,11 +153,15 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     stage.addChild(root);
     const cx = app.renderer.width / 2;
     const cy = app.renderer.height / 2 + 88;
+    const offset = (key: LayoutKey) => compositionLayout[key] ?? { x: 0, y: 0 };
+    const withOffset = (key: LayoutKey, x: number, y: number) => ({ x: x + offset(key).x, y: y + offset(key).y });
 
     // Composición base: dos habitaciones conectadas, no una sala única reetiquetada.
-    const leftRoom = { x: cx - 235, y: cy + 26 };
-    const rightRoom = { x: cx + 205, y: cy + 18 };
-    const corridor = { x: cx - 2, y: cy + 40 };
+    const salaVeraOffset = offset('salaVera');
+    const salaCrisOffset = offset('salaCris');
+    const leftRoom = { x: cx - 235 + salaVeraOffset.x, y: cy + 26 + salaVeraOffset.y };
+    const rightRoom = { x: cx + 205 + salaCrisOffset.x, y: cy + 18 + salaCrisOffset.y };
+    const corridor = { x: cx - 2 + (salaVeraOffset.x + salaCrisOffset.x) / 2, y: cy + 40 + (salaVeraOffset.y + salaCrisOffset.y) / 2 };
 
     const roomShadow = new Graphics();
     roomShadow
@@ -261,10 +283,10 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     addIsoAsset(stage, 'pinnednote01.png', rightRoom.x + 166, rightRoom.y - 122, 2.0);
 
     const positions: Record<Owner, { x: number; y: number }> = {
-      entrada: { x: leftRoom.x - 176, y: leftRoom.y + 72 },
-      vera: { x: leftRoom.x - 18, y: leftRoom.y + 34 },
-      cris: { x: rightRoom.x - 30, y: rightRoom.y + 48 },
-      decision: { x: rightRoom.x + 150, y: rightRoom.y - 24 },
+      entrada: withOffset('entrada', leftRoom.x - 176, leftRoom.y + 72),
+      vera: withOffset('vera', leftRoom.x - 18, leftRoom.y + 34),
+      cris: withOffset('cris', rightRoom.x - 30, rightRoom.y + 48),
+      decision: withOffset('decisiones', rightRoom.x + 150, rightRoom.y - 24),
     };
     const taskPositions: Record<Owner, { x: number; y: number }> = {
       entrada: { x: positions.entrada.x + 16, y: positions.entrada.y + 30 },
@@ -274,21 +296,21 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     };
 
     // Muebles propios por habitación: recepción operativa para Vera, oficina técnica para Cris.
-    addIsoAsset(stage, 'rug03.png', positions.entrada.x + 22, positions.entrada.y + 18, 2.2, 0.96);
-    addIsoAsset(stage, 'rack04.png', positions.entrada.x - 18, positions.entrada.y + 2, 2.15);
-    addIsoAsset(stage, 'telephone.png', positions.entrada.x + 44, positions.entrada.y - 20, 2.1);
+    { const p = withOffset('muebleRecepcion', positions.entrada.x + 22, positions.entrada.y + 18); addIsoAsset(stage, 'rug03.png', p.x, p.y, 2.2, 0.96); }
+    { const p = withOffset('muebleRecepcion', positions.entrada.x - 18, positions.entrada.y + 2); addIsoAsset(stage, 'rack04.png', p.x, p.y, 2.15); }
+    { const p = withOffset('muebleRecepcion', positions.entrada.x + 44, positions.entrada.y - 20); addIsoAsset(stage, 'telephone.png', p.x, p.y, 2.1); }
     addIsoAsset(stage, 'plant01.png', leftRoom.x - 190, leftRoom.y + 122, 2.0);
 
-    addIsoAsset(stage, 'rug01.png', positions.vera.x + 8, positions.vera.y + 62, 2.35, 0.96);
-    addIsoAsset(stage, 'officedesk01norm.png', positions.vera.x + 4, positions.vera.y + 30, 2.48);
-    addIsoAsset(stage, 'officeChair01_back.png', positions.vera.x - 26, positions.vera.y + 42, 2.28, 0.95);
-    addIsoAsset(stage, 'laptop.png', positions.vera.x + 12, positions.vera.y - 4, 2.25);
+    { const p = withOffset('mesaVera', positions.vera.x + 8, positions.vera.y + 62); addIsoAsset(stage, 'rug01.png', p.x, p.y, 2.35, 0.96); }
+    { const p = withOffset('mesaVera', positions.vera.x + 4, positions.vera.y + 30); addIsoAsset(stage, 'officedesk01norm.png', p.x, p.y, 2.48); }
+    { const p = withOffset('mesaVera', positions.vera.x - 26, positions.vera.y + 42); addIsoAsset(stage, 'officeChair01_back.png', p.x, p.y, 2.28, 0.95); }
+    { const p = withOffset('mesaVera', positions.vera.x + 12, positions.vera.y - 4); addIsoAsset(stage, 'laptop.png', p.x, p.y, 2.25); }
     addIsoAsset(stage, 'bookshelf08.png', leftRoom.x + 124, leftRoom.y - 44, 2.18);
     addIsoAsset(stage, 'paper.png', leftRoom.x + 96, leftRoom.y + 56, 2.0);
 
-    addIsoAsset(stage, 'officedesk02big.png', positions.cris.x + 18, positions.cris.y + 36, 2.62);
-    addIsoAsset(stage, 'computer02.png', positions.cris.x + 20, positions.cris.y - 4, 2.48);
-    addIsoAsset(stage, 'officeChair01.png', positions.cris.x - 26, positions.cris.y + 42, 2.28, 0.95);
+    { const p = withOffset('mesaCris', positions.cris.x + 18, positions.cris.y + 36); addIsoAsset(stage, 'officedesk02big.png', p.x, p.y, 2.62); }
+    { const p = withOffset('mesaCris', positions.cris.x + 20, positions.cris.y - 4); addIsoAsset(stage, 'computer02.png', p.x, p.y, 2.48); }
+    { const p = withOffset('mesaCris', positions.cris.x - 26, positions.cris.y + 42); addIsoAsset(stage, 'officeChair01.png', p.x, p.y, 2.28, 0.95); }
     addIsoAsset(stage, 'bookshelf01.png', rightRoom.x - 136, rightRoom.y - 64, 2.18);
     addIsoAsset(stage, 'drawer05.png', rightRoom.x + 34, rightRoom.y + 112, 2.25);
     addIsoAsset(stage, 'plant04.png', rightRoom.x + 224, rightRoom.y + 94, 2.0);
@@ -302,8 +324,8 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
       positions.decision.x + 20, positions.decision.y + 82,
     ]).fill({ color: 0x5a1717, alpha: 0.52 }).stroke({ width: 3, color: 0xff5d5d, alpha: 0.65 });
     stage.addChild(redZone);
-    addIsoAsset(stage, 'armchair.png', positions.decision.x - 42, positions.decision.y + 66, 2.32);
-    addIsoAsset(stage, 'drawer05.png', positions.decision.x + 28, positions.decision.y + 36, 2.35);
+    { const p = withOffset('sillonDecision', positions.decision.x - 42, positions.decision.y + 66); addIsoAsset(stage, 'armchair.png', p.x, p.y, 2.32); }
+    { const p = withOffset('sillonDecision', positions.decision.x + 28, positions.decision.y + 36); addIsoAsset(stage, 'drawer05.png', p.x, p.y, 2.35); }
     addIsoAsset(stage, 'pinnednote01.png', positions.decision.x + 58, positions.decision.y - 36, 2.1);
 
     // Caminos en diagonal suave: entrada → Vera → Cris → decisiones, sin tubería recta.
@@ -425,6 +447,62 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
       }
     });
 
+    if (compositionMode) {
+      const handles: { key: LayoutKey; label: string; x: number; y: number; color: number }[] = [
+        { key: 'salaVera', label: 'sala Vera', x: leftRoom.x - 8, y: leftRoom.y - 28, color: 0x2f9fd7 },
+        { key: 'salaCris', label: 'sala Cris', x: rightRoom.x + 4, y: rightRoom.y - 40, color: 0xffa94d },
+        { key: 'entrada', label: 'entrada', x: positions.entrada.x, y: positions.entrada.y, color: 0xf4c542 },
+        { key: 'decisiones', label: 'decisiones', x: positions.decision.x, y: positions.decision.y, color: 0xff5d5d },
+        { key: 'vera', label: 'Vera', x: positions.vera.x - 18, y: positions.vera.y + 34, color: 0x8dd7ff },
+        { key: 'cris', label: 'Cris', x: positions.cris.x - 10, y: positions.cris.y + 38, color: 0xffca7a },
+        { key: 'muebleRecepcion', label: 'mueble recepción', x: positions.entrada.x + 16 + offset('muebleRecepcion').x, y: positions.entrada.y + 18 + offset('muebleRecepcion').y, color: 0xffffff },
+        { key: 'mesaVera', label: 'mesa Vera', x: positions.vera.x + 4 + offset('mesaVera').x, y: positions.vera.y + 32 + offset('mesaVera').y, color: 0xffffff },
+        { key: 'mesaCris', label: 'mesa Cris', x: positions.cris.x + 18 + offset('mesaCris').x, y: positions.cris.y + 34 + offset('mesaCris').y, color: 0xffffff },
+        { key: 'sillonDecision', label: 'mueble decisión', x: positions.decision.x - 10 + offset('sillonDecision').x, y: positions.decision.y + 58 + offset('sillonDecision').y, color: 0xffffff },
+      ];
+      handles.forEach((handle) => {
+        const hit = new Container();
+        hit.position.set(handle.x, handle.y);
+        hit.eventMode = 'static';
+        hit.cursor = 'grab';
+        const halo = new Graphics();
+        halo.circle(0, 0, 14).fill({ color: handle.color, alpha: 0.24 }).stroke({ width: 3, color: handle.color, alpha: 0.95 });
+        hit.addChild(halo);
+        const label = new Text({ text: handle.label, style: { fill: '#ffffff', fontSize: 10, fontWeight: '900', dropShadow: true } });
+        label.anchor.set(0.5);
+        label.position.set(0, -24);
+        hit.addChild(label);
+        let dragStart: { x: number; y: number; ox: number; oy: number } | null = null;
+        let nextPoint: LayoutPoint | null = null;
+        const commitDrag = () => {
+          hit.cursor = 'grab';
+          if (nextPoint) {
+            onLayoutChange(cleanLayout({ ...compositionLayout, [handle.key]: nextPoint }));
+          }
+          dragStart = null;
+          nextPoint = null;
+        };
+        hit.on('pointerdown', (event: any) => {
+          hit.cursor = 'grabbing';
+          const global = event.global;
+          const current = offset(handle.key);
+          dragStart = { x: global.x, y: global.y, ox: current.x, oy: current.y };
+          nextPoint = current;
+        });
+        hit.on('pointerup', commitDrag);
+        hit.on('pointerupoutside', commitDrag);
+        hit.on('pointermove', (event: any) => {
+          if (!dragStart) return;
+          const global = event.global;
+          const dx = Math.round(global.x - dragStart.x);
+          const dy = Math.round(global.y - dragStart.y);
+          nextPoint = { x: dragStart.ox + dx, y: dragStart.oy + dy };
+          hit.position.set(handle.x + dx, handle.y + dy);
+        });
+        stage.addChild(hit);
+      });
+    }
+
     const flowDot = new Graphics();
     flowDot.circle(0, 0, 6).fill({ color: 0xfff0be, alpha: 0.9 }).stroke({ width: 2, color: 0xffffff, alpha: 0.8 });
     stage.addChild(flowDot);
@@ -489,6 +567,14 @@ function App() {
   const sceneRef = useRef<HTMLDivElement>(null);
   const [tasks, setTasks] = useState<OfficeTask[]>(initialTasks);
   const [selectedId, setSelectedId] = useState<number | null>(1);
+  const [compositionMode, setCompositionMode] = useState(false);
+  const [compositionLayout, setCompositionLayout] = useState<CompositionLayout>(() => {
+    try {
+      return cleanLayout(JSON.parse(window.localStorage.getItem('oficina-composition-layout') || '{}'));
+    } catch {
+      return {};
+    }
+  });
   const [timeline, setTimeline] = useState<TimelineEvent[]>([
     { id: 1, text: 'Entra WhatsApp en recepción', status: 'esperando' as TaskStatus, at: nowTime() },
     { id: 2, text: 'Cris trabaja en bug técnico', status: 'trabajando' as TaskStatus, at: nowTime() },
@@ -497,9 +583,13 @@ function App() {
   const selected = useMemo(() => tasks.find((t) => t.id === selectedId) ?? tasks[0], [tasks, selectedId]);
 
   useEffect(() => {
+    window.localStorage.setItem('oficina-composition-layout', JSON.stringify(cleanLayout(compositionLayout)));
+  }, [compositionLayout]);
+
+  useEffect(() => {
     if (!sceneRef.current) return;
-    return drawOffice(sceneRef.current, tasks, selectedId, setSelectedId);
-  }, [tasks, selectedId]);
+    return drawOffice(sceneRef.current, tasks, selectedId, setSelectedId, compositionMode, compositionLayout, setCompositionLayout);
+  }, [tasks, selectedId, compositionMode, compositionLayout]);
 
   function advance() {
     const task = tasks.find((item) => item.id === selectedId);
@@ -597,6 +687,35 @@ function App() {
     setSelectedId(id);
   }
 
+  async function copyLayout() {
+    const json = JSON.stringify(cleanLayout(compositionLayout), null, 2);
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(json);
+      } else {
+        throw new Error('clipboard api unavailable');
+      }
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = json;
+      textarea.setAttribute('readonly', 'true');
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+    setTimeline((current) => [
+      { id: Date.now(), text: 'Layout de composición copiado al portapapeles', status: 'resuelto' as TaskStatus, at: nowTime() },
+      ...current,
+    ].slice(0, 8));
+  }
+
+  function resetLayout() {
+    setCompositionLayout({});
+  }
+
   return (
     <main className="app">
       <header className="topbar">
@@ -610,6 +729,9 @@ function App() {
           <button onClick={() => addTask('bug')}>+ Bug</button>
           <button className="primary small" onClick={startWhatsAppFlow}>Simular flujo WhatsApp</button>
           <button className="danger small" onClick={startBlockedFlow}>Simular flujo bloqueado</button>
+          <button className={compositionMode ? 'primary small' : 'small'} onClick={() => setCompositionMode((value) => !value)}>Modo composición</button>
+          <button className="small" onClick={copyLayout}>Copiar layout</button>
+          {compositionMode && <button className="small" onClick={resetLayout}>Reset layout</button>}
         </div>
       </header>
       <section className="layout">
