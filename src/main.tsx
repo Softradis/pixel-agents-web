@@ -225,10 +225,12 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
 
       const activeOwners = new Set(tasks.flatMap((task) => [task.reactingOwner, task.status === 'trabajando' || task.status === 'bloqueado' ? task.owner : undefined]).filter(Boolean) as Owner[]);
       const mainTask = tasks.find((task) => task.id === selectedId) ?? tasks[0];
-      const veraTarget = mainTask.owner === 'entrada' ? zones.entrada : mainTask.owner === 'vera' ? zones.vera : mainTask.owner === 'cris' || mainTask.owner === 'decision' ? zones.cris : zones.vera;
-      const crisTarget = mainTask.owner === 'decision' ? zones.decision : zones.cris;
-      const veraPath = findPath(zones.vera, veraTarget);
-      const crisPath = findPath(zones.cris, crisTarget);
+      const veraShouldWalk = mainTask.reactingOwner === 'vera' || mainTask.fromOwner === 'entrada' || mainTask.fromOwner === 'vera';
+      const crisShouldWalk = mainTask.reactingOwner === 'cris' || mainTask.reactingOwner === 'decision' || mainTask.fromOwner === 'cris';
+      const veraTarget = veraShouldWalk ? (mainTask.owner === 'entrada' ? zones.entrada : mainTask.owner === 'vera' ? zones.vera : zones.cris) : zones.vera;
+      const crisTarget = crisShouldWalk && mainTask.owner === 'decision' ? zones.decision : zones.cris;
+      const veraPath = veraShouldWalk ? findPath(zones.vera, veraTarget) : [];
+      const crisPath = crisShouldWalk ? findPath(zones.cris, crisTarget) : [];
       const taskPath = mainTask.fromOwner ? findPath(ownerRoute(mainTask.fromOwner), ownerRoute(mainTask.owner)) : [];
 
       function pointOnPath(start: Tile, path: Tile[], progress: number): { point: Point; dir: Direction; moving: boolean } {
@@ -341,15 +343,17 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
 
         const seconds = time / 1000;
         const flowProgress = (seconds % 6) / 6;
-        const veraWalkProgress = activeOwners.has('vera') || mainTask.owner !== 'entrada' ? (seconds % 2.6) / 2.6 : 0;
-        const crisWalkProgress = activeOwners.has('decision') ? (seconds % 2.4) / 2.4 : 0;
+        const veraWalkProgress = veraPath.length ? (seconds % 2.6) / 2.6 : 0;
+        const crisWalkProgress = crisPath.length ? (seconds % 2.4) / 2.4 : 0;
         const veraAnim = pointOnPath(zones.vera, veraPath, veraWalkProgress);
         const crisAnim = pointOnPath(zones.cris, crisPath, crisWalkProgress);
-        const veraState: AgentState = activeOwners.has('vera') ? 'working' : veraAnim.moving ? 'walk' : 'idle';
-        const crisState: AgentState = activeOwners.has('decision') ? 'blocked' : activeOwners.has('cris') ? 'working' : crisAnim.moving ? 'walk' : 'idle';
+        const veraWalking = veraShouldWalk && veraAnim.moving;
+        const crisWalking = crisShouldWalk && crisAnim.moving;
+        const veraState: AgentState = activeOwners.has('vera') ? 'working' : veraWalking ? 'walk' : 'idle';
+        const crisState: AgentState = activeOwners.has('decision') ? 'blocked' : activeOwners.has('cris') ? 'working' : crisWalking ? 'walk' : 'idle';
 
-        const veraFrame = veraAnim.moving ? Math.floor(time / WALK_FRAME_MS) % 4 : veraState === 'working' ? 3 + Math.floor(time / WORK_FRAME_MS) % 2 : 1;
-        const crisFrame = crisAnim.moving ? Math.floor(time / WALK_FRAME_MS) % 4 : crisState === 'working' ? 3 + Math.floor(time / WORK_FRAME_MS) % 2 : 1;
+        const veraFrame = veraWalking ? Math.floor(time / WALK_FRAME_MS) % 4 : veraState === 'working' ? 3 + Math.floor(time / WORK_FRAME_MS) % 2 : 1;
+        const crisFrame = crisWalking ? Math.floor(time / WALK_FRAME_MS) % 4 : crisState === 'working' ? 3 + Math.floor(time / WORK_FRAME_MS) % 2 : 1;
 
         // task object moving on path
         tasks.forEach((task, index) => {
