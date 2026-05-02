@@ -22,6 +22,8 @@ type AgentState = 'idle' | 'walk' | 'working' | 'blocked';
 type Direction = 'down' | 'up' | 'right' | 'left';
 type Point = { x: number; y: number };
 type Tile = { col: number; row: number };
+type ElementType = 'desk' | 'chair' | 'pc' | 'plant' | 'whiteboard' | 'decisionDesk';
+type PlacedElement = { id: string; type: ElementType; col: number; row: number };
 
 const TILE = 32;
 const FRAME_W = 16;
@@ -29,6 +31,15 @@ const FRAME_H = 32;
 const FRAME_SCALE = 2;
 const WALK_FRAME_MS = 140;
 const WORK_FRAME_MS = 260;
+
+const elementCatalog: Array<{ type: ElementType; label: string }> = [
+  { type: 'desk', label: 'Mesa' },
+  { type: 'chair', label: 'Silla' },
+  { type: 'pc', label: 'PC' },
+  { type: 'plant', label: 'Planta' },
+  { type: 'whiteboard', label: 'Pizarra' },
+  { type: 'decisionDesk', label: 'Mesa decisión' },
+];
 
 const statusText: Record<TaskStatus, string> = {
   esperando: 'Esperando',
@@ -195,7 +206,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, tasks: OfficeTask[], selectedId: number | null, onSelect: (id: number) => void) {
+function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, tasks: OfficeTask[], selectedId: number | null, onSelect: (id: number) => void, editorMode: boolean, selectedElement: ElementType | 'erase' | null, placedElements: PlacedElement[], onPlaceElement: (type: ElementType, tile: Tile) => void, onEraseElement: (tile: Tile) => void) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -341,6 +352,28 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
         drawFurniture(chairImg, { col: 21, row: 11 }, TILE, TILE * 1.5, 6);
         drawFurniture(plantImg, { col: 22, row: 13 }, TILE, TILE * 1.5);
 
+        const imageForElement: Record<ElementType, HTMLImageElement> = {
+          desk: deskImg,
+          chair: chairImg,
+          pc: pcImg,
+          plant: plantImg,
+          whiteboard: whiteboardImg,
+          decisionDesk: deskImg,
+        };
+        placedElements.forEach((item) => {
+          const size = item.type === 'whiteboard' ? [TILE * 2, TILE * 1.4] : item.type === 'desk' || item.type === 'decisionDesk' ? [TILE * 2.1, TILE * 1.4] : item.type === 'pc' || item.type === 'plant' || item.type === 'chair' ? [TILE, TILE * 1.5] : [TILE, TILE];
+          drawFurniture(imageForElement[item.type], item, size[0], size[1], item.type === 'pc' ? -8 : item.type === 'chair' ? 6 : 0);
+          if (editorMode) {
+            ctx.strokeStyle = 'rgba(255,255,255,.45)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(item.col * TILE + 3, item.row * TILE + 3, TILE - 6, TILE - 6);
+          }
+        });
+        if (editorMode) {
+          ctx.fillStyle = selectedElement === 'erase' ? 'rgba(255,93,93,.18)' : 'rgba(86,211,100,.12)';
+          ctx.fillRect(TILE, TILE, (layout.cols - 2) * TILE, (layout.rows - 2) * TILE);
+        }
+
         const seconds = time / 1000;
         const flowProgress = (seconds % 6) / 6;
         const veraWalkProgress = veraPath.length ? (seconds % 2.6) / 2.6 : 0;
@@ -415,6 +448,12 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
       const rect = canvas.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
+      const tile = { col: Math.floor(x / TILE), row: Math.floor(y / TILE) };
+      if (editorMode && selectedElement) {
+        if (selectedElement === 'erase') onEraseElement(tile);
+        else onPlaceElement(selectedElement, tile);
+        return;
+      }
       const hit = tasks.find((task, index) => {
         const point = tileCenter(ownerRoute(task.owner));
         return Math.abs(x - (point.x + (index % 3) * 10 - 10)) < 24 && Math.abs(y - (point.y + TILE * 0.45 + Math.floor(index / 3) * 10)) < 24;
@@ -428,13 +467,19 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
       cancelAnimationFrame(raf);
       canvas.removeEventListener('click', handleClick);
     };
-  }, [canvasRef, tasks, selectedId, onSelect]);
+  }, [canvasRef, tasks, selectedId, onSelect, editorMode, selectedElement, placedElements, onPlaceElement, onEraseElement]);
 }
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [tasks, setTasks] = useState<OfficeTask[]>(initialTasks);
   const [selectedId, setSelectedId] = useState<number | null>(1);
+  const [editorMode, setEditorMode] = useState(false);
+  const [selectedElement, setSelectedElement] = useState<ElementType | 'erase' | null>('desk');
+  const [placedElements, setPlacedElements] = useState<PlacedElement[]>(() => {
+    try { return JSON.parse(window.localStorage.getItem('oficina-pixel-layout-elements') || '[]') as PlacedElement[]; }
+    catch { return []; }
+  });
   const [timeline, setTimeline] = useState<TimelineEvent[]>([
     { id: 1, text: 'Entra WhatsApp en recepción', status: 'esperando' as TaskStatus, at: nowTime() },
     { id: 2, text: 'Cris trabaja en bug técnico', status: 'trabajando' as TaskStatus, at: nowTime() },
@@ -442,7 +487,37 @@ function App() {
   ]);
   const selected = useMemo(() => tasks.find((t) => t.id === selectedId) ?? tasks[0], [tasks, selectedId]);
 
-  usePixelOffice(canvasRef, tasks, selectedId, setSelectedId);
+  useEffect(() => {
+    window.localStorage.setItem('oficina-pixel-layout-elements', JSON.stringify(placedElements));
+  }, [placedElements]);
+
+  function placeElement(type: ElementType, tile: Tile) {
+    if (tile.col <= 0 || tile.row <= 0 || tile.col >= layout.cols - 1 || tile.row >= layout.rows - 1) return;
+    setPlacedElements((current) => [
+      ...current.filter((item) => !(item.col === tile.col && item.row === tile.row)),
+      { id: `${type}-${Date.now()}`, type, col: tile.col, row: tile.row },
+    ]);
+  }
+
+  function eraseElement(tile: Tile) {
+    setPlacedElements((current) => current.filter((item) => !(Math.abs(item.col - tile.col) <= 0 && Math.abs(item.row - tile.row) <= 0)));
+  }
+
+  async function copyEditorLayout() {
+    const json = JSON.stringify({ elements: placedElements }, null, 2);
+    try { await navigator.clipboard.writeText(json); }
+    catch {
+      const ta = document.createElement('textarea');
+      ta.value = json;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    setTimeline((current) => [{ id: Date.now(), text: 'Layout editable copiado al portapapeles', status: 'resuelto' as TaskStatus, at: nowTime() }, ...current].slice(0, 8));
+  }
+
+  usePixelOffice(canvasRef, tasks, selectedId, setSelectedId, editorMode, selectedElement, placedElements, placeElement, eraseElement);
 
   function advance() {
     const task = tasks.find((item) => item.id === selectedId);
@@ -523,11 +598,24 @@ function App() {
           <button onClick={() => addTask('bug')}>+ Bug</button>
           <button className="primary small" onClick={startWhatsAppFlow}>Simular flujo WhatsApp</button>
           <button className="danger small" onClick={startBlockedFlow}>Simular flujo bloqueado</button>
+          <button className={editorMode ? 'primary small' : 'small'} onClick={() => setEditorMode((value) => !value)}>Editor elementos</button>
+          <button className="small" onClick={copyEditorLayout}>Copiar layout</button>
         </div>
       </header>
       <section className="layout">
         <div className="scene pixel-scene">
           <canvas ref={canvasRef} />
+          {editorMode && (
+            <div className="element-editor">
+              <strong>Librería</strong>
+              {elementCatalog.map((item) => (
+                <button key={item.type} className={selectedElement === item.type ? 'primary small' : 'small'} onClick={() => setSelectedElement(item.type)}>{item.label}</button>
+              ))}
+              <button className={selectedElement === 'erase' ? 'danger small' : 'small'} onClick={() => setSelectedElement('erase')}>Borrar</button>
+              <button className="small" onClick={() => setPlacedElements([])}>Limpiar</button>
+              <span>Click en el grid para colocar. Borrar elimina la celda.</span>
+            </div>
+          )}
         </div>
         <aside className="panel">
           <p className="eyebrow">Tarea seleccionada</p>

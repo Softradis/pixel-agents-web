@@ -52,3 +52,6 @@ button.danger:hover { background: #ef5555; }
 
 .pixel-scene { display: grid; place-items: center; overflow: auto; padding: 18px; }
 .pixel-scene canvas { image-rendering: pixelated; border-radius: 18px; box-shadow: 0 18px 60px rgba(0,0,0,.35); max-width: 100%; height: auto; background: #141b29; }
+.element-editor { position: sticky; bottom: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; padding: 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 14px; background: rgba(5, 11, 22, .88); backdrop-filter: blur(8px); }
+.element-editor strong { color: #fff2cf; margin-right: 4px; }
+.element-editor span { color: #9eb8d3; font-size: 12px; }
