@@ -31,3 +31,8 @@ Selected as first integrated asset pack because Kenney provides a direct CC0 dow
 - Author: Kenney
 - License: Creative Commons Zero v1.0 Universal (CC0)
 - Use: floor/walls/furniture placeholders with a more product-like isometric style.
+
+
+## Asset subset policy
+
+The repository intentionally keeps only the assets used by the MVP or immediate visual candidates. Sample project ZIPs and unused variants are excluded to keep the repo light.
