@@ -194,6 +194,36 @@ function App() {
     ].slice(0, 8));
   }
 
+
+  function startWhatsAppFlow() {
+    const id = Date.now();
+    const flow: OfficeTask[] = [
+      { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'esperando', owner: 'entrada', detail: 'Entra un WhatsApp nuevo por recepción.' },
+      { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'trabajando', owner: 'vera', detail: 'Vera recoge el WhatsApp y lo clasifica.' },
+      { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'trabajando', owner: 'cris', detail: 'Vera lo deriva a Cris para resolución técnica.' },
+      { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'resuelto', owner: 'cris', detail: 'Cris termina la tarea y deja tarjeta verde.' },
+    ];
+    const notes = [
+      'Entra WhatsApp automático en recepción',
+      'Vera recoge y clasifica el WhatsApp',
+      'Vera deriva la tarea a Cris',
+      'Cris resuelve y deja tarjeta verde',
+    ];
+    setSelectedId(id);
+    flow.forEach((snapshot, step) => {
+      window.setTimeout(() => {
+        setTasks((current) => {
+          const exists = current.some((task) => task.id === id);
+          return exists ? current.map((task) => task.id === id ? snapshot : task) : [...current, snapshot];
+        });
+        setTimeline((current) => [
+          { id: Date.now() + step, text: notes[step], status: snapshot.status, at: nowTime() },
+          ...current,
+        ].slice(0, 8));
+      }, step * 850);
+    });
+  }
+
   function addTask(kind: OfficeTask['kind']) {
     const id = Date.now();
     const title = kind === 'whatsapp' ? 'WhatsApp entrante' : kind === 'email' ? 'Email nuevo' : kind === 'bug' ? 'Bug servidor' : 'Decisión pendiente';
@@ -219,6 +249,7 @@ function App() {
           <button onClick={() => addTask('whatsapp')}>+ WhatsApp</button>
           <button onClick={() => addTask('email')}>+ Email</button>
           <button onClick={() => addTask('bug')}>+ Bug</button>
+          <button className="primary small" onClick={startWhatsAppFlow}>Simular flujo WhatsApp</button>
         </div>
       </header>
       <section className="layout">
