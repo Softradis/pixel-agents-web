@@ -16,10 +16,12 @@ MVP visual inicial desplegado y evolucionando hacia oficina viva.
   - Tarea resuelta como tarjeta verde.
 - Timeline operativo visible.
 - Leyenda de estados.
-- Simulación automática de flujo WhatsApp.
+- Simulación automática de flujo WhatsApp resuelto.
+- Simulación automática de flujo bloqueado: entrada → Vera → Cris → Decisiones David.
 - Despliegue activo en Backuptools: `http://backuptools:4400/`.
 - Movimiento visual de tareas entre zonas.
 - Reacción simple de Vera/Cris mediante brillo y bounce.
+- Zona de Decisiones David destacada cuando una tarea queda bloqueada.
 - Caminos visuales entre entrada, Vera, Cris y decisiones.
 
 ## Pendiente inmediato

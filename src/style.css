@@ -46,3 +46,6 @@ i.resuelto { background: #56d364; }
 .timeline p { color: #adc5df; margin: 2px 0 0; font-size: 13px; }
 
 button.small { width: auto; margin-top: 0; padding-inline: 14px; }
+
+button.danger { background: #d94141; border: 0; font-weight: 800; }
+button.danger:hover { background: #ef5555; }

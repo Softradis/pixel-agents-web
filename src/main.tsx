@@ -122,7 +122,7 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     paths.stroke({ width: 4, color: 0x8fb5d9, alpha: 0.22 });
     stage.addChild(paths);
 
-    const activeOwners = new Set(tasks.flatMap((task) => [task.reactingOwner, task.status === 'trabajando' ? task.owner : undefined]).filter(Boolean) as Owner[]);
+    const activeOwners = new Set(tasks.flatMap((task) => [task.reactingOwner, task.status === 'trabajando' || task.status === 'bloqueado' ? task.owner : undefined]).filter(Boolean) as Owner[]);
     const agents = [
       ['Vera', positions.vera.x, positions.vera.y - 30, 0x8dd7ff, 'vera'],
       ['Cris', positions.cris.x, positions.cris.y - 30, 0xffca7a, 'cris'],
@@ -143,6 +143,13 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
       nameText.position.set(x, y + 55);
       stage.addChild(nameText);
     });
+
+    if (activeOwners.has('decision')) {
+      const decisionPulse = new Graphics();
+      decisionPulse.roundRect(positions.decision.x - 80, positions.decision.y - 44, 160, 88, 18)
+        .stroke({ width: 5, color: 0xff5d5d, alpha: 0.75 });
+      stage.addChild(decisionPulse);
+    }
 
     const movingSprites: { card: Graphics; icon: Text; from: { x: number; y: number }; to: { x: number; y: number }; started: number }[] = [];
 
@@ -278,6 +285,41 @@ function App() {
     });
   }
 
+
+  function startBlockedFlow() {
+    const id = Date.now();
+    const flow: OfficeTask[] = [
+      { id, title: 'WhatsApp bloqueado', kind: 'whatsapp', status: 'esperando', owner: 'entrada', detail: 'Entra un WhatsApp que acabará necesitando decisión humana.' },
+      { id, title: 'WhatsApp bloqueado', kind: 'whatsapp', status: 'trabajando', fromOwner: 'entrada', reactingOwner: 'vera', pauseLabel: 'clasificando…', owner: 'vera', detail: 'Vera clasifica el mensaje y detecta que es técnico.' },
+      { id, title: 'WhatsApp bloqueado', kind: 'whatsapp', status: 'trabajando', fromOwner: 'vera', reactingOwner: 'cris', pauseLabel: 'diagnosticando…', owner: 'cris', detail: 'Cris analiza la tarea, pero falta una decisión de David.' },
+      { id, title: 'Necesita decisión', kind: 'decision', status: 'bloqueado', fromOwner: 'cris', reactingOwner: 'decision', pauseLabel: 'necesita decisión', owner: 'decision', detail: 'Bloqueado: necesita decisión de David antes de continuar.' },
+    ];
+    const notes = [
+      'Entra tarea que puede bloquearse',
+      'Vera clasifica la tarea',
+      'Vera deriva a Cris',
+      'Cris bloquea: necesita decisión de David',
+    ];
+    setSelectedId(id);
+    flow.forEach((snapshot, step) => {
+      window.setTimeout(() => {
+        setTasks((current) => {
+          const exists = current.some((task) => task.id === id);
+          return exists ? current.map((task) => task.id === id ? snapshot : task) : [...current, snapshot];
+        });
+        setTimeline((current) => [
+          { id: Date.now() + step, text: notes[step], status: snapshot.status, at: nowTime() },
+          ...current,
+        ].slice(0, 8));
+        if (step < flow.length - 1) {
+          window.setTimeout(() => {
+            setTasks((current) => current.map((task) => task.id === id ? { ...task, fromOwner: undefined, reactingOwner: undefined, pauseLabel: undefined } : task));
+          }, 950);
+        }
+      }, step * 1250);
+    });
+  }
+
   function addTask(kind: OfficeTask['kind']) {
     const id = Date.now();
     const title = kind === 'whatsapp' ? 'WhatsApp entrante' : kind === 'email' ? 'Email nuevo' : kind === 'bug' ? 'Bug servidor' : 'Decisión pendiente';
@@ -304,6 +346,7 @@ function App() {
           <button onClick={() => addTask('email')}>+ Email</button>
           <button onClick={() => addTask('bug')}>+ Bug</button>
           <button className="primary small" onClick={startWhatsAppFlow}>Simular flujo WhatsApp</button>
+          <button className="danger small" onClick={startBlockedFlow}>Simular flujo bloqueado</button>
         </div>
       </header>
       <section className="layout">
