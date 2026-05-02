@@ -136,82 +136,146 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     const cx = app.renderer.width / 2;
     const cy = app.renderer.height / 2 + 105;
 
-    // Habitación usada, no escenario: suelo en isla isométrica y recorrido diagonal.
+    // Composición base: dos habitaciones conectadas, no una sala única reetiquetada.
+    const leftRoom = { x: cx - 235, y: cy + 18 };
+    const rightRoom = { x: cx + 140, y: cy + 6 };
+    const corridor = { x: cx - 42, y: cy + 30 };
+
     const roomShadow = new Graphics();
-    roomShadow.poly([
-      cx - 60, cy - 206,
-      cx + 326, cy - 40,
-      cx + 250, cy + 164,
-      cx - 300, cy + 178,
-      cx - 414, cy + 12,
-    ]).fill({ color: 0x171018, alpha: 0.52 });
+    roomShadow
+      .poly([
+        leftRoom.x - 252, leftRoom.y - 34,
+        leftRoom.x + 34, leftRoom.y - 160,
+        leftRoom.x + 270, leftRoom.y - 28,
+        leftRoom.x + 18, leftRoom.y + 150,
+        leftRoom.x - 260, leftRoom.y + 82,
+      ]).fill({ color: 0x070a12, alpha: 0.42 })
+      .poly([
+        corridor.x - 132, corridor.y - 18,
+        corridor.x + 130, corridor.y - 70,
+        corridor.x + 188, corridor.y + 6,
+        corridor.x - 66, corridor.y + 64,
+      ]).fill({ color: 0x070a12, alpha: 0.34 })
+      .poly([
+        rightRoom.x - 270, rightRoom.y - 54,
+        rightRoom.x + 38, rightRoom.y - 190,
+        rightRoom.x + 314, rightRoom.y - 42,
+        rightRoom.x + 58, rightRoom.y + 162,
+        rightRoom.x - 270, rightRoom.y + 86,
+      ]).fill({ color: 0x070a12, alpha: 0.46 });
     stage.addChild(roomShadow);
 
-    const floorBack = new Graphics();
-    floorBack.poly([
-      cx - 54, cy - 198,
-      cx + 300, cy - 42,
-      cx + 226, cy + 144,
-      cx - 286, cy + 156,
-      cx - 386, cy + 8,
-    ]).fill(0x4d352a).stroke({ width: 2, color: 0x1e2534, alpha: 0.55 });
-    stage.addChild(floorBack);
+    const leftFloor = new Graphics();
+    leftFloor.poly([
+      leftRoom.x - 232, leftRoom.y - 36,
+      leftRoom.x + 8, leftRoom.y - 142,
+      leftRoom.x + 232, leftRoom.y - 20,
+      leftRoom.x + 4, leftRoom.y + 126,
+      leftRoom.x - 232, leftRoom.y + 68,
+    ]).fill(0x4f392c).stroke({ width: 2, color: 0x23314a, alpha: 0.72 });
+    stage.addChild(leftFloor);
 
-    const floorTiles = [
-      [cx - 232, cy + 26, 'floor01_01.png'], [cx - 132, cy - 22, 'floor01_02.png'], [cx - 32, cy - 70, 'floor01_03.png'],
-      [cx - 132, cy + 80, 'floor01_04.png'], [cx - 32, cy + 32, 'floor01_01.png'], [cx + 68, cy - 16, 'floor01_02.png'],
-      [cx - 34, cy + 134, 'floor01_03.png'], [cx + 70, cy + 84, 'floor01_04.png'], [cx + 172, cy + 36, 'floor01_01.png'],
+    const corridorFloor = new Graphics();
+    corridorFloor.poly([
+      corridor.x - 122, corridor.y - 16,
+      corridor.x + 88, corridor.y - 64,
+      corridor.x + 154, corridor.y + 2,
+      corridor.x - 58, corridor.y + 56,
+    ]).fill(0x5d4634).stroke({ width: 2, color: 0xffe0a8, alpha: 0.24 });
+    stage.addChild(corridorFloor);
+
+    const rightFloor = new Graphics();
+    rightFloor.poly([
+      rightRoom.x - 246, rightRoom.y - 56,
+      rightRoom.x + 18, rightRoom.y - 172,
+      rightRoom.x + 276, rightRoom.y - 34,
+      rightRoom.x + 44, rightRoom.y + 138,
+      rightRoom.x - 248, rightRoom.y + 70,
+    ]).fill(0x49322b).stroke({ width: 2, color: 0x23314a, alpha: 0.72 });
+    stage.addChild(rightFloor);
+
+    const receptionTiles = [
+      [leftRoom.x - 132, leftRoom.y + 8, 'floor01_01.png'], [leftRoom.x - 32, leftRoom.y - 40, 'floor01_02.png'], [leftRoom.x + 68, leftRoom.y - 88, 'floor01_03.png'],
+      [leftRoom.x - 32, leftRoom.y + 62, 'floor01_04.png'], [leftRoom.x + 68, leftRoom.y + 14, 'floor01_01.png'], [leftRoom.x + 168, leftRoom.y - 34, 'floor01_02.png'],
     ] as const;
-    floorTiles.forEach(([x, y, file]) => addIsoAsset(stage, file, x, y, 2.12, 1, 0.5, 0.5));
+    receptionTiles.forEach(([x, y, file]) => addIsoAsset(stage, file, x, y, 2.08, 1, 0.5, 0.5));
 
-    // Paredes y puerta del nuevo pack: entrada real a la izquierda-abajo y fondo a la derecha.
-    addIsoAsset(stage, 'wall01_ent02_L.png', cx - 310, cy - 28, 2.35);
-    addIsoAsset(stage, 'wall01_sngl_L.png', cx - 252, cy - 76, 2.35);
-    addIsoAsset(stage, 'wall01_sngl_L.png', cx - 194, cy - 124, 2.35);
-    addIsoAsset(stage, 'wall01_sngl_R.png', cx + 24, cy - 160, 2.35);
-    addIsoAsset(stage, 'wall01_sngl_R.png', cx + 88, cy - 122, 2.35);
-    addIsoAsset(stage, 'wall01_ent02_R.png', cx + 154, cy - 84, 2.35);
-    addIsoAsset(stage, 'door_front.png', cx - 306, cy + 86, 2.5);
-    addIsoAsset(stage, 'window01.png', cx + 74, cy - 152, 2.1);
-    addIsoAsset(stage, 'pinnednote01.png', cx + 154, cy - 124, 2.1);
-    addIsoAsset(stage, 'clock01.png', cx - 206, cy - 138, 2.0);
+    const corridorTiles = [
+      [corridor.x - 48, corridor.y + 12, 'floor01_04.png'], [corridor.x + 46, corridor.y - 10, 'floor01_02.png'], [corridor.x + 116, corridor.y + 22, 'floor01_03.png'],
+    ] as const;
+    corridorTiles.forEach(([x, y, file]) => addIsoAsset(stage, file, x, y, 1.78, 0.92, 0.5, 0.5));
+
+    const officeTiles = [
+      [rightRoom.x - 138, rightRoom.y - 2, 'floor01_01.png'], [rightRoom.x - 38, rightRoom.y - 50, 'floor01_02.png'], [rightRoom.x + 62, rightRoom.y - 98, 'floor01_03.png'],
+      [rightRoom.x - 38, rightRoom.y + 52, 'floor01_04.png'], [rightRoom.x + 62, rightRoom.y + 4, 'floor01_01.png'], [rightRoom.x + 162, rightRoom.y - 44, 'floor01_02.png'],
+      [rightRoom.x + 62, rightRoom.y + 104, 'floor01_03.png'], [rightRoom.x + 166, rightRoom.y + 56, 'floor01_04.png'],
+    ] as const;
+    officeTiles.forEach(([x, y, file]) => addIsoAsset(stage, file, x, y, 2.08, 1, 0.5, 0.5));
+
+    // Paredes separadas: recepción de Vera a la izquierda y oficina técnica de Cris a la derecha.
+    addIsoAsset(stage, 'wall01_ent02_L.png', leftRoom.x - 198, leftRoom.y - 26, 2.28);
+    addIsoAsset(stage, 'wall01_sngl_L.png', leftRoom.x - 142, leftRoom.y - 74, 2.28);
+    addIsoAsset(stage, 'wall01_sngl_L.png', leftRoom.x - 86, leftRoom.y - 122, 2.28);
+    addIsoAsset(stage, 'wall01_sngl_R.png', leftRoom.x + 76, leftRoom.y - 132, 2.28);
+    addIsoAsset(stage, 'wall01_ent02_R.png', leftRoom.x + 136, leftRoom.y - 98, 2.28);
+    addIsoAsset(stage, 'door_front.png', leftRoom.x - 198, leftRoom.y + 82, 2.42);
+    addIsoAsset(stage, 'window01.png', leftRoom.x + 62, leftRoom.y - 140, 1.95);
+    addIsoAsset(stage, 'clock01.png', leftRoom.x - 92, leftRoom.y - 136, 1.85);
+
+    addIsoAsset(stage, 'wall01_ent02_L.png', rightRoom.x - 198, rightRoom.y - 42, 2.28);
+    addIsoAsset(stage, 'wall01_sngl_L.png', rightRoom.x - 142, rightRoom.y - 90, 2.28);
+    addIsoAsset(stage, 'wall01_sngl_L.png', rightRoom.x - 86, rightRoom.y - 138, 2.28);
+    addIsoAsset(stage, 'wall01_sngl_R.png', rightRoom.x + 82, rightRoom.y - 150, 2.28);
+    addIsoAsset(stage, 'wall01_sngl_R.png', rightRoom.x + 146, rightRoom.y - 112, 2.28);
+    addIsoAsset(stage, 'wall01_ent02_R.png', rightRoom.x + 210, rightRoom.y - 74, 2.28);
+    addIsoAsset(stage, 'window01.png', rightRoom.x + 52, rightRoom.y - 158, 1.95);
+    addIsoAsset(stage, 'pinnednote01.png', rightRoom.x + 166, rightRoom.y - 122, 2.0);
 
     const positions: Record<Owner, { x: number; y: number }> = {
-      entrada: { x: cx - 286, y: cy + 104 },
-      vera: { x: cx - 154, y: cy + 44 },
-      cris: { x: cx + 20, y: cy + 72 },
-      decision: { x: cx + 168, y: cy - 8 },
+      entrada: { x: leftRoom.x - 178, y: leftRoom.y + 82 },
+      vera: { x: leftRoom.x - 4, y: leftRoom.y + 36 },
+      cris: { x: rightRoom.x - 18, y: rightRoom.y + 58 },
+      decision: { x: rightRoom.x + 172, y: rightRoom.y - 6 },
     };
     const taskPositions: Record<Owner, { x: number; y: number }> = {
-      entrada: { x: positions.entrada.x - 6, y: positions.entrada.y + 34 },
-      vera: { x: positions.vera.x + 54, y: positions.vera.y + 16 },
-      cris: { x: positions.cris.x + 74, y: positions.cris.y + 4 },
-      decision: { x: positions.decision.x + 42, y: positions.decision.y + 54 },
+      entrada: { x: positions.entrada.x + 16, y: positions.entrada.y + 30 },
+      vera: { x: positions.vera.x + 76, y: positions.vera.y + 12 },
+      cris: { x: positions.cris.x + 86, y: positions.cris.y + 0 },
+      decision: { x: positions.decision.x + 36, y: positions.decision.y + 58 },
     };
 
-    // Mobiliario: cada zona se entiende por objetos, no por texto.
-    addIsoAsset(stage, 'rug03.png', positions.entrada.x - 2, positions.entrada.y + 18, 2.35, 0.96);
-    addIsoAsset(stage, 'rack04.png', positions.entrada.x - 34, positions.entrada.y + 8, 2.25);
-    addIsoAsset(stage, 'telephone.png', positions.entrada.x + 26, positions.entrada.y - 12, 2.2);
+    // Muebles propios por habitación: recepción operativa para Vera, oficina técnica para Cris.
+    addIsoAsset(stage, 'rug03.png', positions.entrada.x + 22, positions.entrada.y + 18, 2.2, 0.96);
+    addIsoAsset(stage, 'rack04.png', positions.entrada.x - 18, positions.entrada.y + 2, 2.15);
+    addIsoAsset(stage, 'telephone.png', positions.entrada.x + 44, positions.entrada.y - 20, 2.1);
+    addIsoAsset(stage, 'plant01.png', leftRoom.x - 190, leftRoom.y + 122, 2.0);
 
-    addIsoAsset(stage, 'rug01.png', positions.vera.x + 10, positions.vera.y + 62, 2.5, 0.96);
-    addIsoAsset(stage, 'officedesk01norm.png', positions.vera.x + 4, positions.vera.y + 30, 2.55);
-    addIsoAsset(stage, 'officeChair01_back.png', positions.vera.x - 24, positions.vera.y + 42, 2.35, 0.95);
-    addIsoAsset(stage, 'laptop.png', positions.vera.x + 12, positions.vera.y - 4, 2.35);
+    addIsoAsset(stage, 'rug01.png', positions.vera.x + 8, positions.vera.y + 62, 2.35, 0.96);
+    addIsoAsset(stage, 'officedesk01norm.png', positions.vera.x + 4, positions.vera.y + 30, 2.48);
+    addIsoAsset(stage, 'officeChair01_back.png', positions.vera.x - 26, positions.vera.y + 42, 2.28, 0.95);
+    addIsoAsset(stage, 'laptop.png', positions.vera.x + 12, positions.vera.y - 4, 2.25);
+    addIsoAsset(stage, 'bookshelf08.png', leftRoom.x + 124, leftRoom.y - 44, 2.18);
+    addIsoAsset(stage, 'paper.png', leftRoom.x + 96, leftRoom.y + 56, 2.0);
 
-    addIsoAsset(stage, 'officedesk02big.png', positions.cris.x + 18, positions.cris.y + 36, 2.7);
-    addIsoAsset(stage, 'computer02.png', positions.cris.x + 20, positions.cris.y - 4, 2.55);
-    addIsoAsset(stage, 'officeChair01.png', positions.cris.x - 26, positions.cris.y + 42, 2.35, 0.95);
+    addIsoAsset(stage, 'officedesk02big.png', positions.cris.x + 18, positions.cris.y + 36, 2.62);
+    addIsoAsset(stage, 'computer02.png', positions.cris.x + 20, positions.cris.y - 4, 2.48);
+    addIsoAsset(stage, 'officeChair01.png', positions.cris.x - 26, positions.cris.y + 42, 2.28, 0.95);
+    addIsoAsset(stage, 'bookshelf01.png', rightRoom.x - 136, rightRoom.y - 64, 2.18);
+    addIsoAsset(stage, 'drawer05.png', rightRoom.x + 34, rightRoom.y + 112, 2.25);
+    addIsoAsset(stage, 'plant04.png', rightRoom.x + 224, rightRoom.y + 94, 2.0);
 
-    addIsoAsset(stage, 'bookshelf08.png', cx - 208, cy - 56, 2.35);
-    addIsoAsset(stage, 'bookshelf01.png', cx + 214, cy - 44, 2.35);
-    addIsoAsset(stage, 'drawer05.png', positions.decision.x + 26, positions.decision.y + 34, 2.45);
-    addIsoAsset(stage, 'armchair.png', positions.decision.x - 42, positions.decision.y + 66, 2.45);
-    addIsoAsset(stage, 'plant01.png', cx - 252, cy + 126, 2.15);
-    addIsoAsset(stage, 'plant04.png', cx + 232, cy + 96, 2.15);
-    addIsoAsset(stage, 'lamp01.png', cx + 110, cy + 114, 2.25);
-    addIsoAsset(stage, 'couch.png', cx + 52, cy + 150, 2.2, 0.9);
-    addIsoAsset(stage, 'tablecenter01.png', cx + 106, cy + 122, 2.2, 0.9);
+    // Zona roja: queda físicamente al fondo/derecha de la oficina técnica, separada de la mesa de Cris.
+    const redZone = new Graphics();
+    redZone.poly([
+      positions.decision.x - 78, positions.decision.y + 18,
+      positions.decision.x + 2, positions.decision.y - 24,
+      positions.decision.x + 104, positions.decision.y + 26,
+      positions.decision.x + 20, positions.decision.y + 82,
+    ]).fill({ color: 0x5a1717, alpha: 0.52 }).stroke({ width: 3, color: 0xff5d5d, alpha: 0.65 });
+    stage.addChild(redZone);
+    addIsoAsset(stage, 'armchair.png', positions.decision.x - 42, positions.decision.y + 66, 2.32);
+    addIsoAsset(stage, 'drawer05.png', positions.decision.x + 28, positions.decision.y + 36, 2.35);
+    addIsoAsset(stage, 'pinnednote01.png', positions.decision.x + 58, positions.decision.y - 36, 2.1);
 
     // Caminos en diagonal suave: entrada → Vera → Cris → decisiones, sin tubería recta.
     const paths = new Graphics();
