@@ -2,7 +2,13 @@
 
 ## Estado
 
-MVP visual inicial desplegado y evolucionando hacia oficina viva.
+MVP visual actual validado por Cris y desplegado como primera demo operativa presentable.
+
+URL:
+
+```text
+http://backuptools:4400/
+```
 
 ## Hecho
 
@@ -22,18 +28,60 @@ MVP visual inicial desplegado y evolucionando hacia oficina viva.
 - Movimiento visual de tareas entre zonas.
 - Reacción simple de Vera/Cris mediante brillo y bounce.
 - Zona de Decisiones David destacada cuando una tarea queda bloqueada.
-- Primera integración de assets Kenney Isometric Miniature Library: alfombras, mesas, sillas, estantería/display y sombras de tareas.
-- Mejora de lectura visual: badges de zona, etiquetas de tipo de tarea, agentes con rol y distinción verde/rojo más evidente.
 - Caminos visuales entre entrada, Vera, Cris y decisiones.
+- Assets Kenney Isometric Miniature Library integrados y podados:
+  - ruta estándar: `public/assets/kenney-isometric/`
+  - licencia documentada en `docs/ASSETS.md`
+  - samples/zips eliminados
+  - solo assets usados o candidatos inmediatos.
+- Mejora de lectura visual:
+  - badges de zona,
+  - etiquetas de tipo de tarea,
+  - agentes con rol,
+  - distinción verde/rojo más evidente.
+
+## Validación Cris
+
+Aprobados los hitos:
+
+1. Flujo vivo básico.
+2. Dos finales operativos:
+   - verde = resuelto,
+   - rojo = necesita decisión humana.
+3. Integración/limpieza Kenney.
+4. Lectura visual de producto.
+
+Criterio actual cumplido: la demo explica el valor operativo sin leer logs ni panel técnico.
+
+## Demo script
+
+### Flujo verde
+
+- Pulsar `Simular flujo WhatsApp`.
+- Esperado: Entrada → Vera clasifica → Cris trabaja → final verde resuelto.
+
+### Flujo rojo
+
+- Pulsar `Simular flujo bloqueado`.
+- Esperado: Entrada → Vera clasifica → Cris trabaja → Decisiones David → final rojo `Necesita decisión`.
 
 ## Pendiente inmediato
 
-- Revisión de Cris con criterio de 30 segundos.
-- Ajustar lectura visual si el movimiento no se entiende suficiente.
-- Integrar assets Kenney Isometric Library después de validar el flujo vivo.
+La demo ya es presentable. Siguientes mejoras recomendadas, no bloqueantes:
 
-## Última verificación
+- Sustituir personajes placeholder por sprites/personajes más reconocibles.
+- Mejorar objetos de tarea visuales sin añadir lógica.
+- Preparar una capa de eventos simulados más limpia.
+- Más adelante, conectar eventos reales de OpenClaw por WebSocket/SSE.
+
+## Última verificación requerida
 
 ```bash
 npm run build
+```
+
+Backuptools debe responder:
+
+```text
+HTTP 200 en http://backuptools:4400/
 ```
