@@ -121,3 +121,53 @@ La prueba `pixel-agents` se considera útil si en 30 segundos se entiende:
 - No mergear a `main`.
 - No sustituir `visual-room` por defecto.
 - Tratar `Pixel Agents` como una extensión experimental hasta que David valide el estilo.
+
+## Referencia técnica principal: pablodelucca/pixel-agents
+
+David aclaró que cuando hablaba de `Pixel Agents` se refería a:
+
+```text
+https://github.com/pablodelucca/pixel-agents
+```
+
+Este repo es más relevante que un pack de assets suelto porque ya implementa buena parte del modelo que queremos estudiar:
+
+- agentes como personajes animados,
+- oficina editable,
+- estados visuales ligados a actividad,
+- layout persistente/exportable,
+- assets modulares,
+- game loop en canvas,
+- pathfinding,
+- state machine de personajes,
+- enfoque de extensión visual alrededor de agentes reales.
+
+Licencia observada en el repo: MIT. Aun así, antes de reutilizar código o assets hay que auditar:
+
+1. licencia del repo,
+2. licencias de assets incluidos,
+3. atribuciones requeridas,
+4. si los assets de terceros permiten redistribución/modificación,
+5. qué partes conviene usar como referencia y cuáles no.
+
+### Criterio de integración
+
+No copiar encima de `visual-room`.
+
+Tratarlo como línea separada:
+
+```text
+pixel-agents
+```
+
+La rama debe estudiar arquitectura y extraer ideas, no hacer un copy-paste ciego.
+
+### Próximo paso recomendado
+
+Investigar el repo en serio y decidir si `Oficina Familia` debe evolucionar hacia una arquitectura similar:
+
+- `agent renderer` desacoplado,
+- layout editor real,
+- personajes animados con rutas,
+- estados visuales conectados a eventos reales de OpenClaw,
+- soporte futuro para varios agentes.
