@@ -63,7 +63,7 @@ const initialTasks: OfficeTask[] = [
 ];
 
 
-const assetBase = '/assets/kenney-isometric-miniature-library/Angle';
+const assetBase = '/assets/kenney-isometric/Angle';
 
 function addIsoAsset(stage: Container, file: string, x: number, y: number, scale = 0.72, alpha = 1) {
   const sprite = Sprite.from(`${assetBase}/${file}`);
