@@ -1,0 +1,9 @@
+services:
+  oficina-isometrica:
+    build:
+      context: ../..
+      dockerfile: deploy/backuptools/Dockerfile
+    container_name: oficina-isometrica
+    restart: unless-stopped
+    ports:
+      - "4400:80"
