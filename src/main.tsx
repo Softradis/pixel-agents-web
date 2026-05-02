@@ -5,6 +5,7 @@ import './style.css';
 
 type TaskStatus = 'esperando' | 'trabajando' | 'bloqueado' | 'resuelto';
 type Owner = 'entrada' | 'vera' | 'cris' | 'decision';
+type TimelineEvent = { id: number; text: string; status: TaskStatus; at: string };
 
 type OfficeTask = {
   id: number;
@@ -28,6 +29,8 @@ const statusText: Record<TaskStatus, string> = {
   bloqueado: 'Bloqueado',
   resuelto: 'Resuelto',
 };
+
+const nowTime = () => new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date());
 
 const initialTasks: OfficeTask[] = [
   {
@@ -147,6 +150,13 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
   };
 }
 
+function describeEvent(task: OfficeTask) {
+  if (task.owner === 'entrada') return `Vera recoge y clasifica: ${task.title}`;
+  if (task.owner === 'vera') return `Vera deriva a Cris: ${task.title}`;
+  if (task.owner === 'cris') return task.id % 3 === 0 ? `Cris se bloquea y pide decisión: ${task.title}` : `Cris resuelve: ${task.title}`;
+  return `David desbloquea y cierra: ${task.title}`;
+}
+
 function nextStatus(task: OfficeTask): OfficeTask {
   if (task.owner === 'entrada') return { ...task, owner: 'vera', status: 'trabajando', detail: 'Vera está clasificando el mensaje.' };
   if (task.owner === 'vera') return { ...task, owner: 'cris', status: 'trabajando', detail: 'Cris ejecuta diagnóstico técnico.' };
@@ -161,6 +171,11 @@ function App() {
   const sceneRef = useRef<HTMLDivElement>(null);
   const [tasks, setTasks] = useState<OfficeTask[]>(initialTasks);
   const [selectedId, setSelectedId] = useState<number | null>(1);
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([
+    { id: 1, text: 'Entra WhatsApp en recepción', status: 'esperando' as TaskStatus, at: nowTime() },
+    { id: 2, text: 'Cris trabaja en bug técnico', status: 'trabajando' as TaskStatus, at: nowTime() },
+    { id: 3, text: 'Una tarea queda resuelta', status: 'resuelto', at: nowTime() },
+  ]);
   const selected = useMemo(() => tasks.find((t) => t.id === selectedId) ?? tasks[0], [tasks, selectedId]);
 
   useEffect(() => {
@@ -169,7 +184,14 @@ function App() {
   }, [tasks, selectedId]);
 
   function advance() {
-    setTasks((current) => current.map((task) => (task.id === selectedId ? nextStatus(task) : task)));
+    const task = tasks.find((item) => item.id === selectedId);
+    if (!task) return;
+    const next = nextStatus(task);
+    setTasks((current) => current.map((item) => (item.id === selectedId ? next : item)));
+    setTimeline((current) => [
+      { id: Date.now(), text: describeEvent(task), status: next.status, at: nowTime() },
+      ...current,
+    ].slice(0, 8));
   }
 
   function addTask(kind: OfficeTask['kind']) {
@@ -179,6 +201,10 @@ function App() {
       ...current,
       { id, title, kind, status: 'esperando', owner: 'entrada', detail: 'Nueva tarea simulada entrando en la oficina.' },
     ]);
+    setTimeline((current) => [
+      { id, text: `Nueva tarea entra en recepción: ${title}`, status: 'esperando' as TaskStatus, at: nowTime() },
+      ...current,
+    ].slice(0, 8));
     setSelectedId(id);
   }
 
@@ -215,10 +241,30 @@ function App() {
           <p className="eyebrow">Consola natural</p>
           <input placeholder="Ej: Cris, prioriza esto" onKeyDown={(e) => {
             if (e.key === 'Enter') {
-              setTasks((current) => current.map((task) => task.id === selectedId ? { ...task, status: 'trabajando', detail: `Instrucción recibida: ${e.currentTarget.value}` } : task));
+              const instruction = e.currentTarget.value;
+              setTasks((current) => current.map((task) => task.id === selectedId ? { ...task, status: 'trabajando', detail: `Instrucción recibida: ${instruction}` } : task));
+              setTimeline((current) => [
+                { id: Date.now(), text: `Instrucción: ${instruction}`, status: 'trabajando' as TaskStatus, at: nowTime() },
+                ...current,
+              ].slice(0, 8));
               e.currentTarget.value = '';
             }
           }} />
+          <section className="legend">
+            <p className="eyebrow">Leyenda</p>
+            {(['esperando', 'trabajando', 'bloqueado', 'resuelto'] as TaskStatus[]).map((status) => (
+              <span key={status}><i className={status} />{statusText[status]}</span>
+            ))}
+          </section>
+          <section className="timeline">
+            <p className="eyebrow">Timeline</p>
+            {timeline.map((event) => (
+              <article key={event.id}>
+                <i className={event.status} />
+                <div><strong>{event.at}</strong><p>{event.text}</p></div>
+              </article>
+            ))}
+          </section>
           <p className="hint">Primer objetivo: entender la operación en 30 segundos, sin leer logs.</p>
         </aside>
       </section>

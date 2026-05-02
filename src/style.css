@@ -32,3 +32,15 @@ input { width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,.16
 input:focus { border-color: #4fa3ff; }
 .hint { color: #8fb5d9; font-size: 13px; margin-top: 14px; }
 @media (max-width: 900px) { .topbar { align-items: flex-start; flex-direction: column; } .layout { grid-template-columns: 1fr; height: auto; } .scene { height: 520px; } }
+
+.legend { display: grid; gap: 8px; margin-top: 18px; }
+.legend span { display: flex; align-items: center; gap: 8px; color: #c9dcf0; font-size: 14px; }
+.legend i, .timeline i { width: 11px; height: 11px; border-radius: 999px; display: inline-block; flex: 0 0 auto; }
+i.esperando { background: #f4c542; }
+i.trabajando { background: #4fa3ff; }
+i.bloqueado { background: #ff5d5d; }
+i.resuelto { background: #56d364; }
+.timeline { margin-top: 22px; display: grid; gap: 10px; }
+.timeline article { display: grid; grid-template-columns: 16px 1fr; gap: 8px; align-items: start; padding: 10px; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: rgba(255,255,255,.045); }
+.timeline strong { color: #dbeafe; font-size: 12px; }
+.timeline p { color: #adc5df; margin: 2px 0 0; font-size: 13px; }
