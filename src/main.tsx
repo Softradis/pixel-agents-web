@@ -85,18 +85,19 @@ function addZoneBadge(stage: Container, title: string, subtitle: string, x: numb
   stage.addChild(sub);
 }
 
-const assetBase = '/assets/kenney-isometric/Angle';
+const assetBase = '/assets/essential-isometric';
 const usedIsoAssetFiles = [
-  'floorCarpet_N.png', 'floorCarpet_S.png', 'floorCarpetEnd_W.png', 'floorCarpetSmall_N.png',
-  'wallBooks_N.png', 'wallDoorway_N.png', 'wallBooks_E.png', 'wallDoorway_E.png', 'wallBooks_W.png',
-  'bookcaseWideBooks_N.png', 'bookcaseWideBooks_E.png', 'bookcaseBooksLadder_N.png', 'candleStandDouble_N.png',
-  'bookStand_N.png', 'longTableChairs_W.png', 'longTableDecoratedChairsBooks_N.png', 'displayCaseOpen_N.png',
-  'libraryChair_N.png', 'libraryChair_E.png',
+  'floor01_01.png', 'floor01_02.png', 'floor01_03.png', 'floor01_04.png',
+  'wall01_sngl_L.png', 'wall01_sngl_R.png', 'wall01_ent02_L.png', 'wall01_ent02_R.png', 'door_front.png', 'window01.png',
+  'officedesk01big.png', 'officedesk02big.png', 'officedesk01norm.png', 'officeChair01.png', 'officeChair01_back.png',
+  'computer01.png', 'computer02.png', 'laptop.png', 'bookshelf01.png', 'bookshelf08.png', 'rug01.png', 'rug03.png',
+  'armchair.png', 'lamp01.png', 'paper.png', 'telephone.png', 'drawer05.png', 'couch.png', 'tablecenter01.png', 'rack04.png',
+  'plant01.png', 'plant04.png', 'pinnednote01.png', 'clock01.png', 'vera_worker.png', 'cris_worker.png',
 ];
 
-function addIsoAsset(stage: Container, file: string, x: number, y: number, scale = 0.72, alpha = 1) {
+function addIsoAsset(stage: Container, file: string, x: number, y: number, scale = 2.45, alpha = 1, anchorX = 0.5, anchorY = 1) {
   const sprite = Sprite.from(`${assetBase}/${file}`);
-  sprite.anchor.set(0.5, 0.82);
+  sprite.anchor.set(anchorX, anchorY);
   sprite.position.set(x, y);
   sprite.scale.set(scale);
   sprite.alpha = alpha;
@@ -135,78 +136,95 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     const cx = app.renderer.width / 2;
     const cy = app.renderer.height / 2 + 105;
 
-    // Habitación continua. La geometría manual queda como base/sombra mínima;
-    // el peso visual lo ponen los tiles reales del pack Kenney.
+    // Habitación usada, no escenario: suelo en isla isométrica y recorrido diagonal.
     const roomShadow = new Graphics();
     roomShadow.poly([
-      cx, cy - 205,
-      cx + 360, cy - 24,
-      cx + 250, cy + 178,
-      cx - 350, cy + 178,
-      cx - 430, cy - 12,
-    ]).fill({ color: 0x2b1d13, alpha: 0.42 });
+      cx - 60, cy - 206,
+      cx + 326, cy - 40,
+      cx + 250, cy + 164,
+      cx - 300, cy + 178,
+      cx - 414, cy + 12,
+    ]).fill({ color: 0x171018, alpha: 0.52 });
     stage.addChild(roomShadow);
 
-    const floor = new Graphics();
-    floor.poly([
-      cx, cy - 196,
-      cx + 333, cy - 28,
-      cx + 238, cy + 156,
-      cx - 326, cy + 156,
-      cx - 402, cy - 10,
-    ]).fill(0xcfa56a).stroke({ width: 2, color: 0x6c4b2d, alpha: 0.35 });
-    stage.addChild(floor);
+    const floorBack = new Graphics();
+    floorBack.poly([
+      cx - 54, cy - 198,
+      cx + 300, cy - 42,
+      cx + 226, cy + 144,
+      cx - 286, cy + 156,
+      cx - 386, cy + 8,
+    ]).fill(0x4d352a).stroke({ width: 2, color: 0x1e2534, alpha: 0.55 });
+    stage.addChild(floorBack);
 
-    // Suelo/caminos: alfombras Kenney, no badges flotantes.
-    addIsoAsset(stage, 'floorCarpet_N.png', cx - 220, cy + 70, 0.5, 0.96);
-    addIsoAsset(stage, 'floorCarpet_N.png', cx - 110, cy + 42, 0.5, 0.96);
-    addIsoAsset(stage, 'floorCarpet_S.png', cx + 30, cy + 58, 0.58, 0.96);
-    addIsoAsset(stage, 'floorCarpet_S.png', cx + 154, cy + 72, 0.5, 0.94);
-    addIsoAsset(stage, 'floorCarpetEnd_W.png', cx + 238, cy + 86, 0.42, 0.93);
-    addIsoAsset(stage, 'floorCarpetSmall_N.png', cx + 22, cy + 112, 0.5, 0.92);
+    const floorTiles = [
+      [cx - 232, cy + 26, 'floor01_01.png'], [cx - 132, cy - 22, 'floor01_02.png'], [cx - 32, cy - 70, 'floor01_03.png'],
+      [cx - 132, cy + 80, 'floor01_04.png'], [cx - 32, cy + 32, 'floor01_01.png'], [cx + 68, cy - 16, 'floor01_02.png'],
+      [cx - 34, cy + 134, 'floor01_03.png'], [cx + 70, cy + 84, 'floor01_04.png'], [cx + 172, cy + 36, 'floor01_01.png'],
+    ] as const;
+    floorTiles.forEach(([x, y, file]) => addIsoAsset(stage, file, x, y, 2.12, 1, 0.5, 0.5));
 
-    // Paredes del pack canónico: wallBooks/wallDoorway sustituyen la pared dibujada.
-    addIsoAsset(stage, 'wallBooks_N.png', cx - 242, cy - 92, 0.68);
-    addIsoAsset(stage, 'wallBooks_N.png', cx - 104, cy - 126, 0.68);
-    addIsoAsset(stage, 'wallDoorway_N.png', cx + 34, cy - 128, 0.7);
-    addIsoAsset(stage, 'wallBooks_N.png', cx + 174, cy - 96, 0.68);
-    addIsoAsset(stage, 'wallBooks_E.png', cx + 270, cy - 8, 0.66);
-    addIsoAsset(stage, 'wallDoorway_E.png', cx + 230, cy + 72, 0.66);
-    addIsoAsset(stage, 'wallBooks_W.png', cx - 328, cy + 4, 0.62);
-
-    // Biblioteca/mobiliario pegado a paredes y mesas reales.
-    addIsoAsset(stage, 'bookcaseWideBooks_N.png', cx - 246, cy - 48, 0.48);
-    addIsoAsset(stage, 'bookcaseBooksLadder_N.png', cx - 66, cy - 66, 0.42);
-    addIsoAsset(stage, 'candleStandDouble_N.png', cx + 128, cy - 48, 0.38);
-    addIsoAsset(stage, 'bookcaseWideBooks_E.png', cx + 266, cy + 30, 0.46);
+    // Paredes y puerta del nuevo pack: entrada real a la izquierda-abajo y fondo a la derecha.
+    addIsoAsset(stage, 'wall01_ent02_L.png', cx - 310, cy - 28, 2.35);
+    addIsoAsset(stage, 'wall01_sngl_L.png', cx - 252, cy - 76, 2.35);
+    addIsoAsset(stage, 'wall01_sngl_L.png', cx - 194, cy - 124, 2.35);
+    addIsoAsset(stage, 'wall01_sngl_R.png', cx + 24, cy - 160, 2.35);
+    addIsoAsset(stage, 'wall01_sngl_R.png', cx + 88, cy - 122, 2.35);
+    addIsoAsset(stage, 'wall01_ent02_R.png', cx + 154, cy - 84, 2.35);
+    addIsoAsset(stage, 'door_front.png', cx - 306, cy + 86, 2.5);
+    addIsoAsset(stage, 'window01.png', cx + 74, cy - 152, 2.1);
+    addIsoAsset(stage, 'pinnednote01.png', cx + 154, cy - 124, 2.1);
+    addIsoAsset(stage, 'clock01.png', cx - 206, cy - 138, 2.0);
 
     const positions: Record<Owner, { x: number; y: number }> = {
-      entrada: { x: cx - 252, y: cy + 92 },
-      vera: { x: cx - 142, y: cy + 52 },
-      cris: { x: cx + 34, y: cy + 62 },
-      decision: { x: cx + 210, y: cy + 42 },
+      entrada: { x: cx - 286, y: cy + 104 },
+      vera: { x: cx - 154, y: cy + 44 },
+      cris: { x: cx + 20, y: cy + 72 },
+      decision: { x: cx + 168, y: cy - 8 },
     };
     const taskPositions: Record<Owner, { x: number; y: number }> = {
-      entrada: { x: positions.entrada.x - 12, y: positions.entrada.y + 30 },
-      vera: { x: positions.vera.x + 38, y: positions.vera.y + 4 },
-      cris: { x: positions.cris.x + 48, y: positions.cris.y + 2 },
-      decision: { x: positions.decision.x + 4, y: positions.decision.y + 42 },
+      entrada: { x: positions.entrada.x - 6, y: positions.entrada.y + 34 },
+      vera: { x: positions.vera.x + 54, y: positions.vera.y + 16 },
+      cris: { x: positions.cris.x + 74, y: positions.cris.y + 4 },
+      decision: { x: positions.decision.x + 42, y: positions.decision.y + 54 },
     };
 
-    // Mobiliario real de cada zona, colocado como flujo: entrada → Vera → Cris → decisiones.
-    addIsoAsset(stage, 'bookStand_N.png', positions.entrada.x, positions.entrada.y + 18, 0.42);
-    addIsoAsset(stage, 'longTableChairs_W.png', positions.vera.x, positions.vera.y + 26, 0.46);
-    addIsoAsset(stage, 'longTableDecoratedChairsBooks_N.png', positions.cris.x, positions.cris.y + 24, 0.5);
-    addIsoAsset(stage, 'displayCaseOpen_N.png', positions.decision.x, positions.decision.y + 32, 0.44);
+    // Mobiliario: cada zona se entiende por objetos, no por texto.
+    addIsoAsset(stage, 'rug03.png', positions.entrada.x - 2, positions.entrada.y + 18, 2.35, 0.96);
+    addIsoAsset(stage, 'rack04.png', positions.entrada.x - 34, positions.entrada.y + 8, 2.25);
+    addIsoAsset(stage, 'telephone.png', positions.entrada.x + 26, positions.entrada.y - 12, 2.2);
 
-    // Caminos sutiles: narrativa, no UI de dashboard.
+    addIsoAsset(stage, 'rug01.png', positions.vera.x + 10, positions.vera.y + 62, 2.5, 0.96);
+    addIsoAsset(stage, 'officedesk01norm.png', positions.vera.x + 4, positions.vera.y + 30, 2.55);
+    addIsoAsset(stage, 'officeChair01_back.png', positions.vera.x - 24, positions.vera.y + 42, 2.35, 0.95);
+    addIsoAsset(stage, 'laptop.png', positions.vera.x + 12, positions.vera.y - 4, 2.35);
+
+    addIsoAsset(stage, 'officedesk02big.png', positions.cris.x + 18, positions.cris.y + 36, 2.7);
+    addIsoAsset(stage, 'computer02.png', positions.cris.x + 20, positions.cris.y - 4, 2.55);
+    addIsoAsset(stage, 'officeChair01.png', positions.cris.x - 26, positions.cris.y + 42, 2.35, 0.95);
+
+    addIsoAsset(stage, 'bookshelf08.png', cx - 208, cy - 56, 2.35);
+    addIsoAsset(stage, 'bookshelf01.png', cx + 214, cy - 44, 2.35);
+    addIsoAsset(stage, 'drawer05.png', positions.decision.x + 26, positions.decision.y + 34, 2.45);
+    addIsoAsset(stage, 'armchair.png', positions.decision.x - 42, positions.decision.y + 66, 2.45);
+    addIsoAsset(stage, 'plant01.png', cx - 252, cy + 126, 2.15);
+    addIsoAsset(stage, 'plant04.png', cx + 232, cy + 96, 2.15);
+    addIsoAsset(stage, 'lamp01.png', cx + 110, cy + 114, 2.25);
+    addIsoAsset(stage, 'couch.png', cx + 52, cy + 150, 2.2, 0.9);
+    addIsoAsset(stage, 'tablecenter01.png', cx + 106, cy + 122, 2.2, 0.9);
+
+    // Caminos en diagonal suave: entrada → Vera → Cris → decisiones, sin tubería recta.
     const paths = new Graphics();
     const pathPairs: [Owner, Owner][] = [['entrada', 'vera'], ['vera', 'cris'], ['cris', 'decision']];
     pathPairs.forEach(([from, to]) => {
-      paths.moveTo(positions[from].x, positions[from].y);
-      paths.lineTo(positions[to].x, positions[to].y);
+      const a = positions[from];
+      const b = positions[to];
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2 - 28;
+      paths.moveTo(a.x, a.y + 18);
+      paths.quadraticCurveTo(mx, my, b.x, b.y + 18);
     });
-    paths.stroke({ width: 4, color: 0x6c4b2d, alpha: 0.25 });
+    paths.stroke({ width: 4, color: 0xffe0a8, alpha: 0.22 });
     stage.addChild(paths);
 
     const activeOwners = new Set(tasks.flatMap((task) => [task.reactingOwner, task.status === 'trabajando' || task.status === 'bloqueado' ? task.owner : undefined]).filter(Boolean) as Owner[]);
@@ -214,20 +232,20 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     if (activeOwners.has('decision')) {
       const decisionPulse = new Graphics();
       decisionPulse.poly([
-        positions.decision.x, positions.decision.y - 38,
-        positions.decision.x + 78, positions.decision.y,
-        positions.decision.x, positions.decision.y + 38,
-        positions.decision.x - 78, positions.decision.y,
-      ]).stroke({ width: 5, color: 0xff5d5d, alpha: 0.78 });
+        positions.decision.x + 26, positions.decision.y + 6,
+        positions.decision.x + 90, positions.decision.y + 38,
+        positions.decision.x + 28, positions.decision.y + 72,
+        positions.decision.x - 38, positions.decision.y + 38,
+      ]).stroke({ width: 5, color: 0xff5d5d, alpha: 0.8 });
       stage.addChild(decisionPulse);
     }
 
     // Etiquetas pequeñas integradas, solo para orientar.
     const smallLabels = [
-      ['Entrada', positions.entrada.x - 4, positions.entrada.y - 40, 0xf4c542],
-      ['Vera', positions.vera.x - 8, positions.vera.y - 48, 0x8dd7ff],
-      ['Cris', positions.cris.x + 8, positions.cris.y - 48, 0xffca7a],
-      ['Decisiones', positions.decision.x + 8, positions.decision.y - 38, 0xff5d5d],
+      ['Entrada', positions.entrada.x - 4, positions.entrada.y - 28, 0xf4c542],
+      ['Vera', positions.vera.x - 8, positions.vera.y - 44, 0x8dd7ff],
+      ['Cris', positions.cris.x + 2, positions.cris.y - 44, 0xffca7a],
+      ['Decisiones', positions.decision.x + 28, positions.decision.y - 34, 0xff5d5d],
     ] as const;
     smallLabels.forEach(([label, x, y, color]) => {
       const tag = new Graphics();
@@ -240,49 +258,26 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     });
 
     const agents = [
-      ['Vera', positions.vera.x - 10, positions.vera.y - 8, 0x2f9fd7, 0xffffff, 'vera'],
-      ['Cris', positions.cris.x - 14, positions.cris.y - 8, 0xb66a2c, 0xffe0b2, 'cris'],
+      ['Vera', 'vera_worker.png', positions.vera.x - 18, positions.vera.y + 34, 'vera'],
+      ['Cris', 'cris_worker.png', positions.cris.x - 10, positions.cris.y + 38, 'cris'],
     ] as const;
     const agentBodies: { body: Container; active: boolean; baseY: number }[] = [];
-    agents.forEach(([name, x, y, color, accent, owner]) => {
+    agents.forEach(([name, file, x, y, owner]) => {
       const active = activeOwners.has(owner);
       const glow = new Graphics();
-      glow.ellipse(x, y + 12, active ? 26 : 0, active ? 12 : 0).fill({ color, alpha: active ? 0.2 : 0 });
+      glow.ellipse(x, y + 4, active ? 32 : 0, active ? 12 : 0).fill({ color: owner === 'vera' ? 0x2f9fd7 : 0xffca7a, alpha: active ? 0.24 : 0 });
       stage.addChild(glow);
-      addIsoAsset(stage, owner === 'vera' ? 'libraryChair_N.png' : 'libraryChair_E.png', x + (owner === 'vera' ? -12 : 16), y + 36, 0.26, 0.92);
-
-      // Fallback documentado: el pack canónico no trae personajes. Evitamos los
-      // círculos/rectángulos crudos y usamos una silueta isométrica temporal.
       const body = new Container();
-      const shadow = new Graphics();
-      shadow.ellipse(0, 38, 22, 8).fill({ color: 0x000000, alpha: 0.28 });
-      body.addChild(shadow);
-      const legs = new Graphics();
-      legs.poly([-13, 24, -2, 30, -7, 46, -20, 39]).fill(0x2b3445);
-      legs.poly([7, 26, 19, 31, 13, 47, 1, 39]).fill(0x243044);
-      body.addChild(legs);
-      const torso = new Graphics();
-      torso.poly([-24, 4, 0, -8, 25, 4, 16, 31, -15, 31]).fill(color).stroke({ width: active ? 4 : 2, color: accent, alpha: active ? 0.9 : 0.55 });
-      torso.poly([-22, 5, -32, 22, -20, 27, -10, 10]).fill(0x1f2937);
-      torso.poly([22, 5, 32, 22, 20, 27, 10, 10]).fill(0x1f2937);
-      body.addChild(torso);
-      const head = new Graphics();
-      head.ellipse(0, -24, 15, 18).fill(0xf3c7a5).stroke({ width: 2, color: 0x5b3526, alpha: 0.55 });
-      head.poly([-15, -31, -3, -44, 14, -33, 10, -24, -12, -24]).fill(owner === 'vera' ? 0x153c63 : 0x4a2a16);
-      head.circle(-5, -24, 2.2).fill(0x10151f);
-      head.circle(6, -24, 2.2).fill(0x10151f);
-      body.addChild(head);
-      const badge = new Text({ text: owner === 'vera' ? 'V' : 'C', style: { fill: '#ffffff', fontSize: 11, fontWeight: '900' } });
-      badge.anchor.set(0.5);
-      badge.position.set(0, 13);
-      body.addChild(badge);
+      const sprite = Sprite.from(`${assetBase}/${file}`);
+      sprite.anchor.set(0.5, 1);
+      sprite.scale.set(owner === 'vera' ? 2.7 : 2.5);
+      body.addChild(sprite);
       body.position.set(x, y);
-      body.scale.set(0.72);
       stage.addChild(body);
       agentBodies.push({ body, active, baseY: y });
       const nameText = new Text({ text: name, style: { fill: '#fff7e6', fontSize: 12, fontWeight: '800' } });
       nameText.anchor.set(0.5);
-      nameText.position.set(x, y + 44);
+      nameText.position.set(x, y + 18);
       stage.addChild(nameText);
     });
 
