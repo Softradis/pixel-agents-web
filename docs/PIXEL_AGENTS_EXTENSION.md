@@ -218,3 +218,17 @@ Se mantiene el núcleo del MVP:
 - Vera/Cris animadas,
 - flujo verde/rojo,
 - timeline/panel.
+
+## Editor mínimo de elementos
+
+`pixel-agents` incorpora ahora un editor mínimo de composición en `4402`:
+
+- botón `Editor elementos`,
+- librería básica: mesa, silla, PC, planta, pizarra y mesa decisión,
+- click en el grid para colocar,
+- modo borrar por celda,
+- limpiar elementos colocados,
+- persistencia local en navegador,
+- botón `Copiar layout` para exportar JSON.
+
+Esto es el primer paso hacia una librería editable real. El objetivo es que David pueda montar la oficina visualmente antes de congelar un layout base.
