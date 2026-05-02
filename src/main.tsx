@@ -74,32 +74,30 @@ const initialTasks: OfficeTask[] = [
 ];
 
 const layout = {
-  cols: 22,
-  rows: 14,
-  entrada: { col: 2, row: 10 },
-  veraDesk: { col: 6, row: 7 },
-  veraSeat: { col: 6, row: 8 },
-  corridor: { col: 10, row: 8 },
-  crisDesk: { col: 15, row: 7 },
-  crisSeat: { col: 15, row: 8 },
-  decision: { col: 19, row: 5 },
+  cols: 24,
+  rows: 15,
+  entrada: { col: 3, row: 11 },
+  veraDesk: { col: 5, row: 8 },
+  veraSeat: { col: 5, row: 9 },
+  corridor: { col: 11, row: 8 },
+  crisDesk: { col: 17, row: 8 },
+  crisSeat: { col: 17, row: 9 },
+  decision: { col: 21, row: 4 },
 };
 
 const zones = {
-  entrada: { col: 2, row: 10 },
+  entrada: layout.entrada,
   vera: layout.veraSeat,
   cris: layout.crisSeat,
   decision: layout.decision,
 } satisfies Record<Owner, Tile>;
 
 const blocked = new Set<string>([
-  // outer walls
+  // outer walls only: inner separation is visual, not a hard maze.
   ...Array.from({ length: layout.cols }, (_, col) => `${col}:0`),
   ...Array.from({ length: layout.cols }, (_, col) => `${col}:${layout.rows - 1}`),
   ...Array.from({ length: layout.rows }, (_, row) => `0:${row}`),
   ...Array.from({ length: layout.rows }, (_, row) => `${layout.cols - 1}:${row}`),
-  // inner divider walls with corridor openings
-  '10:1', '10:2', '10:3', '10:4', '10:5', '10:11', '10:12',
   // desks and decision furniture block walking
   `${layout.veraDesk.col}:${layout.veraDesk.row}`,
   `${layout.crisDesk.col}:${layout.crisDesk.row}`,
@@ -261,50 +259,54 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
           }
         }
 
-        // room zones
-        ctx.fillStyle = 'rgba(47,159,215,.12)';
-        ctx.fillRect(TILE, TILE, 9 * TILE, 11 * TILE);
-        ctx.fillStyle = 'rgba(255,169,77,.12)';
-        ctx.fillRect(11 * TILE, TILE, 10 * TILE, 11 * TILE);
-        ctx.fillStyle = 'rgba(255,224,168,.12)';
-        ctx.fillRect(9 * TILE, 6 * TILE, 4 * TILE, 4 * TILE);
-        ctx.fillStyle = 'rgba(255,93,93,.16)';
-        ctx.fillRect(18 * TILE, 3 * TILE, 3 * TILE, 4 * TILE);
+        // room zones: one continuous office with a readable central hallway.
+        ctx.fillStyle = 'rgba(47,159,215,.13)';
+        ctx.fillRect(TILE, TILE, 8 * TILE, 12 * TILE);
+        ctx.fillStyle = 'rgba(255,224,168,.13)';
+        ctx.fillRect(9 * TILE, TILE, 4 * TILE, 12 * TILE);
+        ctx.fillStyle = 'rgba(255,169,77,.13)';
+        ctx.fillRect(13 * TILE, TILE, 10 * TILE, 12 * TILE);
+        ctx.fillStyle = 'rgba(255,93,93,.18)';
+        ctx.fillRect(19 * TILE, 2 * TILE, 4 * TILE, 4 * TILE);
 
-        // walls
+        // walls: outer shell plus soft glass partitions with real door gaps.
         ctx.fillStyle = '#394a64';
-        for (const item of blocked) {
-          const [col, row] = item.split(':').map(Number);
-          if ((col === layout.veraDesk.col && row === layout.veraDesk.row) || (col === layout.crisDesk.col && row === layout.crisDesk.row) || (col === layout.decision.col && row === layout.decision.row)) continue;
-          ctx.fillRect(col * TILE, row * TILE, TILE, TILE);
-        }
-        ctx.fillStyle = '#60708b';
-        ctx.fillRect(10 * TILE, 6 * TILE, TILE, TILE);
-        ctx.fillRect(10 * TILE, 10 * TILE, TILE, TILE);
+        ctx.fillRect(0, 0, layout.cols * TILE, TILE);
+        ctx.fillRect(0, (layout.rows - 1) * TILE, layout.cols * TILE, TILE);
+        ctx.fillRect(0, 0, TILE, layout.rows * TILE);
+        ctx.fillRect((layout.cols - 1) * TILE, 0, TILE, layout.rows * TILE);
+        ctx.fillStyle = 'rgba(96,112,139,.82)';
+        ctx.fillRect(9 * TILE - 4, TILE, 8, 5 * TILE);
+        ctx.fillRect(9 * TILE - 4, 10 * TILE, 8, 3 * TILE);
+        ctx.fillRect(13 * TILE - 4, TILE, 8, 5 * TILE);
+        ctx.fillRect(13 * TILE - 4, 10 * TILE, 8, 3 * TILE);
+        ctx.fillStyle = 'rgba(255,255,255,.18)';
+        ctx.fillRect(9 * TILE - 4, 6 * TILE, 8, 4 * TILE);
+        ctx.fillRect(13 * TILE - 4, 6 * TILE, 8, 4 * TILE);
 
         // labels
         const label = (text: string, x: number, y: number, color: string) => {
           ctx.fillStyle = color;
-          ctx.font = '700 13px Inter, system-ui';
+          ctx.font = '800 13px Inter, system-ui';
           ctx.fillText(text, x, y);
         };
-        label('Recepción Vera', TILE * 2, TILE * 2.1, '#8dd7ff');
-        label('Pasillo tareas', TILE * 9.2, TILE * 5.6, '#ffe0a8');
-        label('Oficina Cris', TILE * 13, TILE * 2.1, '#ffca7a');
-        label('Decisiones humanas', TILE * 17.4, TILE * 2.6, '#ff8a8a');
+        label('Recepción Vera', TILE * 2.1, TILE * 2.05, '#8dd7ff');
+        label('Pasillo de tareas', TILE * 9.25, TILE * 2.05, '#ffe0a8');
+        label('Oficina Cris', TILE * 14.1, TILE * 2.05, '#ffca7a');
+        label('Decisiones humanas', TILE * 19.1, TILE * 2.05, '#ff8a8a');
 
         const drawFurniture = (img: HTMLImageElement, tile: Tile, w = TILE * 1.5, h = TILE, yOffset = 0) => {
           ctx.imageSmoothingEnabled = false;
           ctx.drawImage(img, tile.col * TILE + TILE / 2 - w / 2, tile.row * TILE + TILE / 2 - h / 2 + yOffset, w, h);
         };
-        drawFurniture(whiteboardImg, { col: 4, row: 2 }, TILE * 2, TILE * 1.5);
-        drawFurniture(plantImg, { col: 2, row: 3 }, TILE, TILE * 1.5);
+        drawFurniture(whiteboardImg, { col: 4, row: 3 }, TILE * 2, TILE * 1.5);
+        drawFurniture(plantImg, { col: 2, row: 4 }, TILE, TILE * 1.5);
         drawFurniture(deskImg, layout.veraDesk, TILE * 2.2, TILE * 1.45);
         drawFurniture(chairImg, layout.veraSeat, TILE, TILE * 1.5, 6);
         drawFurniture(deskImg, layout.crisDesk, TILE * 2.2, TILE * 1.45);
         drawFurniture(pcImg, { col: layout.crisDesk.col + 1, row: layout.crisDesk.row }, TILE, TILE * 1.5, -12);
         drawFurniture(chairImg, layout.crisSeat, TILE, TILE * 1.5, 6);
-        drawFurniture(plantImg, { col: 19, row: 10 }, TILE, TILE * 1.5);
+        drawFurniture(plantImg, { col: 21, row: 11 }, TILE, TILE * 1.5);
 
         const seconds = time / 1000;
         const flowProgress = (seconds % 6) / 6;
