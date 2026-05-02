@@ -123,67 +123,50 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     const cx = app.renderer.width / 2;
     const cy = app.renderer.height / 2 + 90;
 
-    // Habitación continua, no zonas flotantes.
+    // Habitación continua. La geometría manual queda como base/sombra mínima;
+    // el peso visual lo ponen los tiles reales del pack Kenney.
+    const roomShadow = new Graphics();
+    roomShadow.poly([
+      cx, cy - 250,
+      cx + 445, cy - 28,
+      cx + 310, cy + 218,
+      cx - 430, cy + 218,
+      cx - 535, cy - 18,
+    ]).fill({ color: 0x2b1d13, alpha: 0.42 });
+    stage.addChild(roomShadow);
+
     const floor = new Graphics();
     floor.poly([
-      cx, cy - 245,
-      cx + 420, cy - 35,
-      cx + 300, cy + 205,
-      cx - 420, cy + 205,
-      cx - 520, cy - 20,
-    ]).fill(0xd8b77b).stroke({ width: 4, color: 0x6c4b2d, alpha: 0.75 });
+      cx, cy - 238,
+      cx + 410, cy - 32,
+      cx + 292, cy + 194,
+      cx - 405, cy + 194,
+      cx - 500, cy - 18,
+    ]).fill(0xcfa56a).stroke({ width: 2, color: 0x6c4b2d, alpha: 0.35 });
     stage.addChild(floor);
 
-    // Alfombras/caminos integrados en el suelo.
-    addIsoAsset(stage, 'floorCarpet_N.png', cx - 205, cy + 40, 0.85, 0.95);
-    addIsoAsset(stage, 'floorCarpet_S.png', cx + 75, cy + 30, 0.85, 0.95);
-    addIsoAsset(stage, 'floorCarpet_W.png', cx + 270, cy + 95, 0.72, 0.92);
+    // Suelo/caminos: alfombras Kenney, no badges flotantes.
+    addIsoAsset(stage, 'floorCarpet_N.png', cx - 286, cy + 38, 0.78, 0.96);
+    addIsoAsset(stage, 'floorCarpet_N.png', cx - 128, cy + 8, 0.78, 0.96);
+    addIsoAsset(stage, 'floorCarpet_S.png', cx + 48, cy + 28, 0.82, 0.96);
+    addIsoAsset(stage, 'floorCarpet_S.png', cx + 210, cy + 72, 0.75, 0.94);
+    addIsoAsset(stage, 'floorCarpetEnd_W.png', cx + 330, cy + 108, 0.68, 0.93);
+    addIsoAsset(stage, 'floorCarpetSmall_N.png', cx - 20, cy + 118, 0.72, 0.92);
 
-    // Paredes reales: zócalo + altura visible, antes del mobiliario.
-    const backWall = new Graphics();
-    backWall.poly([
-      cx - 425, cy - 24,
-      cx, cy - 245,
-      cx + 418, cy - 36,
-      cx + 418, cy - 138,
-      cx, cy - 348,
-      cx - 425, cy - 126,
-    ]).fill(0xcaa56c).stroke({ width: 4, color: 0x4f3522, alpha: 0.85 });
-    stage.addChild(backWall);
+    // Paredes del pack canónico: wallBooks/wallDoorway sustituyen la pared dibujada.
+    addIsoAsset(stage, 'wallBooks_N.png', cx - 300, cy - 126, 1.02);
+    addIsoAsset(stage, 'wallBooks_N.png', cx - 110, cy - 170, 1.02);
+    addIsoAsset(stage, 'wallDoorway_N.png', cx + 80, cy - 170, 1.02);
+    addIsoAsset(stage, 'wallBooks_N.png', cx + 260, cy - 126, 1.02);
+    addIsoAsset(stage, 'wallBooks_E.png', cx + 354, cy - 32, 1.02);
+    addIsoAsset(stage, 'wallDoorway_E.png', cx + 304, cy + 80, 1.02);
+    addIsoAsset(stage, 'wallBooks_W.png', cx - 430, cy - 16, 0.96);
 
-    const leftWall = new Graphics();
-    leftWall.poly([
-      cx - 520, cy - 20,
-      cx - 425, cy - 24,
-      cx - 425, cy - 126,
-      cx - 520, cy - 122,
-    ]).fill(0xb98e58).stroke({ width: 4, color: 0x4f3522, alpha: 0.85 });
-    stage.addChild(leftWall);
-
-    const rightWall = new Graphics();
-    rightWall.poly([
-      cx + 418, cy - 36,
-      cx + 300, cy + 205,
-      cx + 300, cy + 103,
-      cx + 418, cy - 138,
-    ]).fill(0xb98e58).stroke({ width: 4, color: 0x4f3522, alpha: 0.85 });
-    stage.addChild(rightWall);
-
-    const wallTop = new Graphics();
-    wallTop.poly([
-      cx - 425, cy - 126,
-      cx, cy - 348,
-      cx + 418, cy - 138,
-      cx, cy - 255,
-    ]).fill(0x8f633e).stroke({ width: 3, color: 0x4f3522, alpha: 0.9 });
-    stage.addChild(wallTop);
-
-    // Biblioteca/mobiliario pegado a las paredes para que se lean como sala.
-    addIsoAsset(stage, 'wallBooks_N.png', cx - 185, cy - 170, 0.95);
-    addIsoAsset(stage, 'wallBooks_N.png', cx + 10, cy - 172, 0.95);
-    addIsoAsset(stage, 'wallBooks_E.png', cx + 275, cy - 70, 0.95);
-    addIsoAsset(stage, 'bookcaseWideBooks_N.png', cx - 305, cy - 104, 0.82);
-    addIsoAsset(stage, 'bookcaseWideBooks_E.png', cx + 335, cy - 4, 0.78);
+    // Biblioteca/mobiliario pegado a paredes y mesas reales.
+    addIsoAsset(stage, 'bookcaseWideBooks_N.png', cx - 310, cy - 82, 0.78);
+    addIsoAsset(stage, 'bookcaseWideBooks_E.png', cx + 350, cy + 18, 0.76);
+    addIsoAsset(stage, 'bookcaseBooksLadder_N.png', cx - 20, cy - 104, 0.72);
+    addIsoAsset(stage, 'candleStandDouble_N.png', cx + 178, cy - 98, 0.62);
 
     const positions: Record<Owner, { x: number; y: number }> = {
       entrada: { x: cx - 300, y: cy + 78 },
@@ -239,26 +222,48 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     });
 
     const agents = [
-      ['Vera', positions.vera.x - 20, positions.vera.y - 10, 0x8dd7ff, 'vera'],
-      ['Cris', positions.cris.x + 15, positions.cris.y - 10, 0xffca7a, 'cris'],
+      ['Vera', positions.vera.x - 18, positions.vera.y - 12, 0x2f9fd7, 0xffffff, 'vera'],
+      ['Cris', positions.cris.x + 14, positions.cris.y - 12, 0xb66a2c, 0xffe0b2, 'cris'],
     ] as const;
-    const agentBodies: { body: Graphics; active: boolean }[] = [];
-    agents.forEach(([name, x, y, color, owner]) => {
+    const agentBodies: { body: Container; active: boolean }[] = [];
+    agents.forEach(([name, x, y, color, accent, owner]) => {
       const active = activeOwners.has(owner);
       const glow = new Graphics();
-      glow.circle(x, y + 12, active ? 34 : 0).fill({ color, alpha: active ? 0.18 : 0 });
+      glow.ellipse(x, y + 18, active ? 38 : 0, active ? 18 : 0).fill({ color, alpha: active ? 0.2 : 0 });
       stage.addChild(glow);
-      addIsoAsset(stage, owner === 'vera' ? 'libraryChair_N.png' : 'libraryChair_E.png', x + (owner === 'vera' ? -18 : 22), y + 46, 0.38, 0.92);
-      const body = new Graphics();
-      body.circle(x, y - 18, 17).fill(color);
-      body.roundRect(x - 22, y + 1, 44, 36, 12).fill(color).stroke({ width: active ? 4 : 2, color: 0xffffff, alpha: active ? 0.82 : 0.48 });
-      body.circle(x + 7, y - 21, 3).fill(0x07111f);
-      body.circle(x - 7, y - 21, 3).fill(0x07111f);
+      addIsoAsset(stage, owner === 'vera' ? 'libraryChair_N.png' : 'libraryChair_E.png', x + (owner === 'vera' ? -18 : 22), y + 48, 0.38, 0.92);
+
+      // Fallback documentado: el pack canónico no trae personajes. Evitamos los
+      // círculos/rectángulos crudos y usamos una silueta isométrica temporal.
+      const body = new Container();
+      const shadow = new Graphics();
+      shadow.ellipse(0, 38, 22, 8).fill({ color: 0x000000, alpha: 0.28 });
+      body.addChild(shadow);
+      const legs = new Graphics();
+      legs.poly([-13, 24, -2, 30, -7, 46, -20, 39]).fill(0x2b3445);
+      legs.poly([7, 26, 19, 31, 13, 47, 1, 39]).fill(0x243044);
+      body.addChild(legs);
+      const torso = new Graphics();
+      torso.poly([-24, 4, 0, -8, 25, 4, 16, 31, -15, 31]).fill(color).stroke({ width: active ? 4 : 2, color: accent, alpha: active ? 0.9 : 0.55 });
+      torso.poly([-22, 5, -32, 22, -20, 27, -10, 10]).fill(0x1f2937);
+      torso.poly([22, 5, 32, 22, 20, 27, 10, 10]).fill(0x1f2937);
+      body.addChild(torso);
+      const head = new Graphics();
+      head.ellipse(0, -24, 15, 18).fill(0xf3c7a5).stroke({ width: 2, color: 0x5b3526, alpha: 0.55 });
+      head.poly([-15, -31, -3, -44, 14, -33, 10, -24, -12, -24]).fill(owner === 'vera' ? 0x153c63 : 0x4a2a16);
+      head.circle(-5, -24, 2.2).fill(0x10151f);
+      head.circle(6, -24, 2.2).fill(0x10151f);
+      body.addChild(head);
+      const badge = new Text({ text: owner === 'vera' ? 'V' : 'C', style: { fill: '#ffffff', fontSize: 11, fontWeight: '900' } });
+      badge.anchor.set(0.5);
+      badge.position.set(0, 13);
+      body.addChild(badge);
+      body.position.set(x, y);
       stage.addChild(body);
       agentBodies.push({ body, active });
       const nameText = new Text({ text: name, style: { fill: '#fff7e6', fontSize: 12, fontWeight: '800' } });
       nameText.anchor.set(0.5);
-      nameText.position.set(x, y + 55);
+      nameText.position.set(x, y + 58);
       stage.addChild(nameText);
     });
 
