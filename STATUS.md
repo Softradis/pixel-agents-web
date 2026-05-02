@@ -29,7 +29,7 @@ http://backuptools:4400/
 - Reacción simple de Vera/Cris mediante brillo y bounce.
 - Zona de Decisiones David destacada cuando una tarea queda bloqueada.
 - Caminos visuales entre entrada, Vera, Cris y decisiones.
-- Assets Kenney Isometric Miniature Library integrados y podados:
+- Assets Kenney integrados y podados, con fuente canónica fijada en Kenney Isometric Library Tiles:
   - ruta estándar: `public/assets/kenney-isometric/`
   - licencia documentada en `docs/ASSETS.md`
   - samples/zips eliminados
@@ -73,6 +73,7 @@ La demo ya es presentable. Siguientes mejoras recomendadas, no bloqueantes:
 - Mejorar objetos de tarea visuales sin añadir lógica.
 - Preparar una capa de eventos simulados más limpia.
 - Más adelante, conectar eventos reales de OpenClaw por WebSocket/SSE.
+- Revisar que los assets finales vienen del pack canónico: https://kenney-assets.itch.io/isometric-library-tiles
 
 ## Última verificación requerida
 

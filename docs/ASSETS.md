@@ -1,38 +1,34 @@
 # Assets
 
-## Kenney Isometric Library Tiles
+## Fuente canónica obligatoria
 
-Selected visual direction for the office prototype.
+El proyecto debe usar como referencia principal este pack:
 
-- Source: https://kenney-assets.itch.io/isometric-library-tiles
-- Author: Kenney
-- License: Creative Commons Zero v1.0 Universal (CC0)
-- Notes from source page: allowed for commercial and non-commercial projects; attribution not required but appreciated.
+- **Kenney Isometric Library Tiles**
+- URL: https://kenney-assets.itch.io/isometric-library-tiles
+- Autor: Kenney
+- Licencia: Creative Commons Zero v1.0 Universal (CC0)
+- Uso permitido: proyectos comerciales y no comerciales; atribución no requerida, aunque apreciada.
 
-Planned use:
+Este pack es el estilo visual aprobado por David/Cris para la oficina isométrica.
 
-- isometric floors/walls
-- tables/bookcases adapted as office furniture
-- character sprites as base for Vera/Cris movement
+## Ruta local estándar
 
-## Integration policy
+Los assets usados por la app deben vivir en:
 
-- Keep third-party assets under `public/assets/<pack-name>/`.
-- Keep license/source notes in this file.
-- Do not mix generated or unknown-license assets without documenting source and rights.
+```text
+public/assets/kenney-isometric/
+```
 
+## Política de integración
 
-## Kenney Isometric Miniature Library
+- Usar assets del pack Kenney Isometric Library Tiles como fuente principal.
+- Mantener solo assets usados por el MVP o candidatos inmediatos.
+- No subir samples/zips si no aportan al runtime.
+- No mezclar assets de licencia desconocida.
+- Si se usa un asset temporal de otro pack Kenney CC0, debe quedar documentado como temporal y sustituible.
+- Si un asset complica la lectura del flujo verde/rojo, no entra.
 
-Selected as first integrated asset pack because Kenney provides a direct CC0 download and it matches the preferred library/isometric direction.
+## Estado actual
 
-- Source: https://kenney.nl/assets/isometric-miniature-library
-- Download: https://kenney.nl/media/pages/assets/isometric-miniature-library/d259cc34d5-1674932086/kenney_isometric-miniature-library.zip
-- Author: Kenney
-- License: Creative Commons Zero v1.0 Universal (CC0)
-- Use: floor/walls/furniture placeholders with a more product-like isometric style.
-
-
-## Asset subset policy
-
-The repository intentionally keeps only the assets used by the MVP or immediate visual candidates. Sample project ZIPs and unused variants are excluded to keep the repo light.
+La primera integración visual está en `public/assets/kenney-isometric/` y debe revisarse contra la fuente canónica de itch.io antes de considerar estable la fase visual.
