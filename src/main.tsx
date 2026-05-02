@@ -22,8 +22,9 @@ type AgentState = 'idle' | 'walk' | 'working' | 'blocked';
 type Direction = 'down' | 'up' | 'right' | 'left';
 type Point = { x: number; y: number };
 type Tile = { col: number; row: number };
-type ElementType = 'desk' | 'chair' | 'pc' | 'plant' | 'whiteboard' | 'decisionDesk';
+type ElementType = string;
 type PlacedElement = { id: string; type: ElementType; col: number; row: number };
+type CatalogItem = { type: ElementType; label: string; category: string; src: string; w: number; h: number; yOffset?: number };
 
 const TILE = 32;
 const FRAME_W = 16;
@@ -32,14 +33,44 @@ const FRAME_SCALE = 2;
 const WALK_FRAME_MS = 140;
 const WORK_FRAME_MS = 260;
 
-const elementCatalog: Array<{ type: ElementType; label: string }> = [
-  { type: 'desk', label: 'Mesa' },
-  { type: 'chair', label: 'Silla' },
-  { type: 'pc', label: 'PC' },
-  { type: 'plant', label: 'Planta' },
-  { type: 'whiteboard', label: 'Pizarra' },
-  { type: 'decisionDesk', label: 'Mesa decisión' },
+const elementCatalog: CatalogItem[] = [
+  { type: 'BIN', label: 'Papelera', category: 'Varios', src: '/assets/pixel-agents/furniture-full/BIN/BIN.png', w: 1, h: 1 },
+  { type: 'BOOKSHELF', label: 'Estantería', category: 'Pared', src: '/assets/pixel-agents/furniture-full/BOOKSHELF/BOOKSHELF.png', w: 2, h: 1 },
+  { type: 'DOUBLE_BOOKSHELF', label: 'Estantería doble', category: 'Pared', src: '/assets/pixel-agents/furniture-full/DOUBLE_BOOKSHELF/DOUBLE_BOOKSHELF.png', w: 2, h: 2 },
+  { type: 'CLOCK', label: 'Reloj', category: 'Pared', src: '/assets/pixel-agents/furniture-full/CLOCK/CLOCK.png', w: 1, h: 2 },
+  { type: 'WHITEBOARD', label: 'Pizarra', category: 'Pared', src: '/assets/pixel-agents/furniture-full/WHITEBOARD/WHITEBOARD.png', w: 2, h: 1.4 },
+  { type: 'LARGE_PAINTING', label: 'Cuadro grande', category: 'Pared', src: '/assets/pixel-agents/furniture-full/LARGE_PAINTING/LARGE_PAINTING.png', w: 2, h: 2 },
+  { type: 'SMALL_PAINTING', label: 'Cuadro', category: 'Pared', src: '/assets/pixel-agents/furniture-full/SMALL_PAINTING/SMALL_PAINTING.png', w: 1, h: 1 },
+  { type: 'SMALL_PAINTING_2', label: 'Cuadro 2', category: 'Pared', src: '/assets/pixel-agents/furniture-full/SMALL_PAINTING_2/SMALL_PAINTING_2.png', w: 1, h: 1 },
+  { type: 'DESK_FRONT', label: 'Mesa frontal', category: 'Mesas', src: '/assets/pixel-agents/furniture-full/DESK/DESK_FRONT.png', w: 2.2, h: 1.45 },
+  { type: 'DESK_SIDE', label: 'Mesa lateral', category: 'Mesas', src: '/assets/pixel-agents/furniture-full/DESK/DESK_SIDE.png', w: 1, h: 3.2 },
+  { type: 'SMALL_TABLE_FRONT', label: 'Mesa pequeña', category: 'Mesas', src: '/assets/pixel-agents/furniture-full/SMALL_TABLE/SMALL_TABLE_FRONT.png', w: 1.6, h: 1 },
+  { type: 'SMALL_TABLE_SIDE', label: 'Mesa pequeña lateral', category: 'Mesas', src: '/assets/pixel-agents/furniture-full/SMALL_TABLE/SMALL_TABLE_SIDE.png', w: 1, h: 1.6 },
+  { type: 'TABLE_FRONT', label: 'Mesa', category: 'Mesas', src: '/assets/pixel-agents/furniture-full/TABLE_FRONT/TABLE_FRONT.png', w: 2, h: 1 },
+  { type: 'COFFEE_TABLE', label: 'Mesa café', category: 'Mesas', src: '/assets/pixel-agents/furniture-full/COFFEE_TABLE/COFFEE_TABLE.png', w: 2, h: 2 },
+  { type: 'WOODEN_CHAIR_FRONT', label: 'Silla madera', category: 'Sillas', src: '/assets/pixel-agents/furniture-full/WOODEN_CHAIR/WOODEN_CHAIR_FRONT.png', w: 1, h: 1.5, yOffset: 6 },
+  { type: 'WOODEN_CHAIR_BACK', label: 'Silla madera trasera', category: 'Sillas', src: '/assets/pixel-agents/furniture-full/WOODEN_CHAIR/WOODEN_CHAIR_BACK.png', w: 1, h: 1.5, yOffset: 6 },
+  { type: 'WOODEN_CHAIR_SIDE', label: 'Silla madera lateral', category: 'Sillas', src: '/assets/pixel-agents/furniture-full/WOODEN_CHAIR/WOODEN_CHAIR_SIDE.png', w: 1, h: 1.5, yOffset: 6 },
+  { type: 'CUSHIONED_CHAIR_FRONT', label: 'Silla acolchada', category: 'Sillas', src: '/assets/pixel-agents/furniture-full/CUSHIONED_CHAIR/CUSHIONED_CHAIR_FRONT.png', w: 1, h: 1 },
+  { type: 'CUSHIONED_CHAIR_BACK', label: 'Silla acolchada trasera', category: 'Sillas', src: '/assets/pixel-agents/furniture-full/CUSHIONED_CHAIR/CUSHIONED_CHAIR_BACK.png', w: 1, h: 1 },
+  { type: 'CUSHIONED_CHAIR_SIDE', label: 'Silla acolchada lateral', category: 'Sillas', src: '/assets/pixel-agents/furniture-full/CUSHIONED_CHAIR/CUSHIONED_CHAIR_SIDE.png', w: 1, h: 1 },
+  { type: 'WOODEN_BENCH', label: 'Banco madera', category: 'Sillas', src: '/assets/pixel-agents/furniture-full/WOODEN_BENCH/WOODEN_BENCH.png', w: 2, h: 1 },
+  { type: 'CUSHIONED_BENCH', label: 'Banco acolchado', category: 'Sillas', src: '/assets/pixel-agents/furniture-full/CUSHIONED_BENCH/CUSHIONED_BENCH.png', w: 1, h: 1 },
+  { type: 'SOFA_FRONT', label: 'Sofá', category: 'Sillas', src: '/assets/pixel-agents/furniture-full/SOFA/SOFA_FRONT.png', w: 2, h: 1 },
+  { type: 'SOFA_BACK', label: 'Sofá trasero', category: 'Sillas', src: '/assets/pixel-agents/furniture-full/SOFA/SOFA_BACK.png', w: 2, h: 1 },
+  { type: 'SOFA_SIDE', label: 'Sofá lateral', category: 'Sillas', src: '/assets/pixel-agents/furniture-full/SOFA/SOFA_SIDE.png', w: 1, h: 2 },
+  { type: 'PC_ON', label: 'PC encendido', category: 'Electrónica', src: '/assets/pixel-agents/furniture-full/PC/PC_FRONT_ON_1.png', w: 1, h: 1.5, yOffset: -8 },
+  { type: 'PC_OFF', label: 'PC apagado', category: 'Electrónica', src: '/assets/pixel-agents/furniture-full/PC/PC_FRONT_OFF.png', w: 1, h: 1.5, yOffset: -8 },
+  { type: 'PC_SIDE', label: 'PC lateral', category: 'Electrónica', src: '/assets/pixel-agents/furniture-full/PC/PC_SIDE.png', w: 1, h: 1.5, yOffset: -8 },
+  { type: 'COFFEE', label: 'Café', category: 'Varios', src: '/assets/pixel-agents/furniture-full/COFFEE/COFFEE.png', w: 1, h: 1 },
+  { type: 'PLANT', label: 'Planta', category: 'Decoración', src: '/assets/pixel-agents/furniture-full/PLANT/PLANT.png', w: 1, h: 1.5 },
+  { type: 'PLANT_2', label: 'Planta 2', category: 'Decoración', src: '/assets/pixel-agents/furniture-full/PLANT_2/PLANT_2.png', w: 1, h: 1.5 },
+  { type: 'LARGE_PLANT', label: 'Planta grande', category: 'Decoración', src: '/assets/pixel-agents/furniture-full/LARGE_PLANT/LARGE_PLANT.png', w: 2, h: 2.4 },
+  { type: 'HANGING_PLANT', label: 'Planta colgante', category: 'Pared', src: '/assets/pixel-agents/furniture-full/HANGING_PLANT/HANGING_PLANT.png', w: 1, h: 2 },
+  { type: 'CACTUS', label: 'Cactus', category: 'Decoración', src: '/assets/pixel-agents/furniture-full/CACTUS/CACTUS.png', w: 1, h: 1.7 },
+  { type: 'POT', label: 'Maceta', category: 'Decoración', src: '/assets/pixel-agents/furniture-full/POT/POT.png', w: 1, h: 1 },
 ];
+const catalogByType = Object.fromEntries(elementCatalog.map((item) => [item.type, item])) as Record<string, CatalogItem>;
 
 const statusText: Record<TaskStatus, string> = {
   esperando: 'Esperando',
@@ -222,7 +253,11 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
       loadImage('/assets/pixel-agents/furniture/plant.png'),
       loadImage('/assets/pixel-agents/furniture/whiteboard.png'),
       loadImage('/assets/pixel-agents/floors/floor_0.png'),
-    ]).then(([veraImg, crisImg, deskImg, pcImg, chairImg, plantImg, whiteboardImg, floorImg]) => {
+    ]).then(async ([veraImg, crisImg, deskImg, pcImg, chairImg, plantImg, whiteboardImg, floorImg]) => {
+      const loadedCatalogImages = new Map<string, HTMLImageElement>();
+      await Promise.all(elementCatalog.map(async (item) => {
+        try { loadedCatalogImages.set(item.type, await loadImage(item.src)); } catch { /* ignore broken optional assets */ }
+      }));
       if (disposed) return;
       const ctx = canvas.getContext('2d')!;
       const dpr = window.devicePixelRatio || 1;
@@ -352,17 +387,11 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
         drawFurniture(chairImg, { col: 21, row: 11 }, TILE, TILE * 1.5, 6);
         drawFurniture(plantImg, { col: 22, row: 13 }, TILE, TILE * 1.5);
 
-        const imageForElement: Record<ElementType, HTMLImageElement> = {
-          desk: deskImg,
-          chair: chairImg,
-          pc: pcImg,
-          plant: plantImg,
-          whiteboard: whiteboardImg,
-          decisionDesk: deskImg,
-        };
         placedElements.forEach((item) => {
-          const size = item.type === 'whiteboard' ? [TILE * 2, TILE * 1.4] : item.type === 'desk' || item.type === 'decisionDesk' ? [TILE * 2.1, TILE * 1.4] : item.type === 'pc' || item.type === 'plant' || item.type === 'chair' ? [TILE, TILE * 1.5] : [TILE, TILE];
-          drawFurniture(imageForElement[item.type], item, size[0], size[1], item.type === 'pc' ? -8 : item.type === 'chair' ? 6 : 0);
+          const meta = catalogByType[item.type];
+          const image = meta ? loadedCatalogImages.get(item.type) : undefined;
+          if (!meta || !image) return;
+          drawFurniture(image, item, meta.w * TILE, meta.h * TILE, meta.yOffset ?? 0);
           if (editorMode) {
             ctx.strokeStyle = 'rgba(255,255,255,.45)';
             ctx.lineWidth = 1;
