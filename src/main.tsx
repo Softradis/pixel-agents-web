@@ -134,64 +134,93 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     const root = new Graphics();
     stage.addChild(root);
     const cx = app.renderer.width / 2;
-    const cy = app.renderer.height / 2 + 105;
+    const cy = app.renderer.height / 2 + 88;
 
     // Composición base: dos habitaciones conectadas, no una sala única reetiquetada.
-    const leftRoom = { x: cx - 235, y: cy + 18 };
-    const rightRoom = { x: cx + 140, y: cy + 6 };
-    const corridor = { x: cx - 42, y: cy + 30 };
+    const leftRoom = { x: cx - 235, y: cy + 26 };
+    const rightRoom = { x: cx + 205, y: cy + 18 };
+    const corridor = { x: cx - 2, y: cy + 40 };
 
     const roomShadow = new Graphics();
     roomShadow
       .poly([
-        leftRoom.x - 252, leftRoom.y - 34,
-        leftRoom.x + 34, leftRoom.y - 160,
-        leftRoom.x + 270, leftRoom.y - 28,
-        leftRoom.x + 18, leftRoom.y + 150,
-        leftRoom.x - 260, leftRoom.y + 82,
-      ]).fill({ color: 0x070a12, alpha: 0.42 })
+        leftRoom.x - 262, leftRoom.y - 24,
+        leftRoom.x - 10, leftRoom.y - 152,
+        leftRoom.x + 244, leftRoom.y - 24,
+        leftRoom.x - 10, leftRoom.y + 122,
+      ]).fill({ color: 0x05070c, alpha: 0.5 })
       .poly([
-        corridor.x - 132, corridor.y - 18,
-        corridor.x + 130, corridor.y - 70,
-        corridor.x + 188, corridor.y + 6,
-        corridor.x - 66, corridor.y + 64,
-      ]).fill({ color: 0x070a12, alpha: 0.34 })
+        corridor.x - 112, corridor.y - 22,
+        corridor.x + 112, corridor.y - 72,
+        corridor.x + 186, corridor.y - 18,
+        corridor.x - 38, corridor.y + 42,
+      ]).fill({ color: 0x05070c, alpha: 0.38 })
       .poly([
-        rightRoom.x - 270, rightRoom.y - 54,
-        rightRoom.x + 38, rightRoom.y - 190,
-        rightRoom.x + 314, rightRoom.y - 42,
-        rightRoom.x + 58, rightRoom.y + 162,
-        rightRoom.x - 270, rightRoom.y + 86,
-      ]).fill({ color: 0x070a12, alpha: 0.46 });
+        rightRoom.x - 280, rightRoom.y - 34,
+        rightRoom.x + 4, rightRoom.y - 178,
+        rightRoom.x + 292, rightRoom.y - 34,
+        rightRoom.x + 6, rightRoom.y + 136,
+      ]).fill({ color: 0x05070c, alpha: 0.52 });
     stage.addChild(roomShadow);
 
     const leftFloor = new Graphics();
-    leftFloor.poly([
-      leftRoom.x - 232, leftRoom.y - 36,
-      leftRoom.x + 8, leftRoom.y - 142,
-      leftRoom.x + 232, leftRoom.y - 20,
-      leftRoom.x + 4, leftRoom.y + 126,
-      leftRoom.x - 232, leftRoom.y + 68,
-    ]).fill(0x4f392c).stroke({ width: 2, color: 0x23314a, alpha: 0.72 });
+    leftFloor
+      .poly([
+        leftRoom.x - 236, leftRoom.y - 28,
+        leftRoom.x - 8, leftRoom.y - 142,
+        leftRoom.x + 220, leftRoom.y - 24,
+        leftRoom.x - 6, leftRoom.y + 108,
+      ]).fill(0x593f31).stroke({ width: 3, color: 0x7bbce8, alpha: 0.55 })
+      .poly([
+        leftRoom.x - 8, leftRoom.y - 142,
+        leftRoom.x + 220, leftRoom.y - 24,
+        leftRoom.x + 220, leftRoom.y - 92,
+        leftRoom.x - 8, leftRoom.y - 206,
+      ]).fill({ color: 0x2a344a, alpha: 0.72 })
+      .poly([
+        leftRoom.x - 236, leftRoom.y - 28,
+        leftRoom.x - 8, leftRoom.y - 142,
+        leftRoom.x - 8, leftRoom.y - 206,
+        leftRoom.x - 236, leftRoom.y - 90,
+      ]).fill({ color: 0x222b3f, alpha: 0.72 });
     stage.addChild(leftFloor);
 
     const corridorFloor = new Graphics();
-    corridorFloor.poly([
-      corridor.x - 122, corridor.y - 16,
-      corridor.x + 88, corridor.y - 64,
-      corridor.x + 154, corridor.y + 2,
-      corridor.x - 58, corridor.y + 56,
-    ]).fill(0x5d4634).stroke({ width: 2, color: 0xffe0a8, alpha: 0.24 });
+    corridorFloor
+      .poly([
+        corridor.x - 118, corridor.y - 18,
+        corridor.x + 98, corridor.y - 66,
+        corridor.x + 172, corridor.y - 14,
+        corridor.x - 42, corridor.y + 42,
+      ]).fill(0x6a513d).stroke({ width: 3, color: 0xffe0a8, alpha: 0.42 })
+      .poly([
+        corridor.x - 96, corridor.y - 8,
+        corridor.x + 104, corridor.y - 52,
+        corridor.x + 140, corridor.y - 22,
+        corridor.x - 58, corridor.y + 26,
+      ]).fill({ color: 0xffe0a8, alpha: 0.10 });
     stage.addChild(corridorFloor);
 
     const rightFloor = new Graphics();
-    rightFloor.poly([
-      rightRoom.x - 246, rightRoom.y - 56,
-      rightRoom.x + 18, rightRoom.y - 172,
-      rightRoom.x + 276, rightRoom.y - 34,
-      rightRoom.x + 44, rightRoom.y + 138,
-      rightRoom.x - 248, rightRoom.y + 70,
-    ]).fill(0x49322b).stroke({ width: 2, color: 0x23314a, alpha: 0.72 });
+    rightFloor
+      .poly([
+        rightRoom.x - 252, rightRoom.y - 44,
+        rightRoom.x + 4, rightRoom.y - 172,
+        rightRoom.x + 260, rightRoom.y - 38,
+        rightRoom.x + 2, rightRoom.y + 120,
+      ]).fill(0x50372f).stroke({ width: 3, color: 0xffca7a, alpha: 0.55 })
+      .poly([
+        rightRoom.x + 4, rightRoom.y - 172,
+        rightRoom.x + 260, rightRoom.y - 38,
+        rightRoom.x + 260, rightRoom.y - 106,
+        rightRoom.x + 4, rightRoom.y - 236,
+      ]).fill({ color: 0x342c3b, alpha: 0.74 })
+      .poly([
+        rightRoom.x - 252, rightRoom.y - 44,
+        rightRoom.x + 4, rightRoom.y - 172,
+        rightRoom.x + 4, rightRoom.y - 236,
+        rightRoom.x - 252, rightRoom.y - 106,
+      ]).fill({ color: 0x2d2738, alpha: 0.74 });
     stage.addChild(rightFloor);
 
     const receptionTiles = [
@@ -206,9 +235,9 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     corridorTiles.forEach(([x, y, file]) => addIsoAsset(stage, file, x, y, 1.78, 0.92, 0.5, 0.5));
 
     const officeTiles = [
-      [rightRoom.x - 138, rightRoom.y - 2, 'floor01_01.png'], [rightRoom.x - 38, rightRoom.y - 50, 'floor01_02.png'], [rightRoom.x + 62, rightRoom.y - 98, 'floor01_03.png'],
-      [rightRoom.x - 38, rightRoom.y + 52, 'floor01_04.png'], [rightRoom.x + 62, rightRoom.y + 4, 'floor01_01.png'], [rightRoom.x + 162, rightRoom.y - 44, 'floor01_02.png'],
-      [rightRoom.x + 62, rightRoom.y + 104, 'floor01_03.png'], [rightRoom.x + 166, rightRoom.y + 56, 'floor01_04.png'],
+      [rightRoom.x - 144, rightRoom.y - 14, 'floor01_01.png'], [rightRoom.x - 44, rightRoom.y - 62, 'floor01_02.png'], [rightRoom.x + 56, rightRoom.y - 110, 'floor01_03.png'],
+      [rightRoom.x - 44, rightRoom.y + 40, 'floor01_04.png'], [rightRoom.x + 56, rightRoom.y - 8, 'floor01_01.png'], [rightRoom.x + 156, rightRoom.y - 56, 'floor01_02.png'],
+      [rightRoom.x + 56, rightRoom.y + 92, 'floor01_03.png'], [rightRoom.x + 160, rightRoom.y + 44, 'floor01_04.png'],
     ] as const;
     officeTiles.forEach(([x, y, file]) => addIsoAsset(stage, file, x, y, 2.08, 1, 0.5, 0.5));
 
@@ -232,10 +261,10 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     addIsoAsset(stage, 'pinnednote01.png', rightRoom.x + 166, rightRoom.y - 122, 2.0);
 
     const positions: Record<Owner, { x: number; y: number }> = {
-      entrada: { x: leftRoom.x - 178, y: leftRoom.y + 82 },
-      vera: { x: leftRoom.x - 4, y: leftRoom.y + 36 },
-      cris: { x: rightRoom.x - 18, y: rightRoom.y + 58 },
-      decision: { x: rightRoom.x + 172, y: rightRoom.y - 6 },
+      entrada: { x: leftRoom.x - 176, y: leftRoom.y + 72 },
+      vera: { x: leftRoom.x - 18, y: leftRoom.y + 34 },
+      cris: { x: rightRoom.x - 30, y: rightRoom.y + 48 },
+      decision: { x: rightRoom.x + 150, y: rightRoom.y - 24 },
     };
     const taskPositions: Record<Owner, { x: number; y: number }> = {
       entrada: { x: positions.entrada.x + 16, y: positions.entrada.y + 30 },
@@ -306,16 +335,16 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
 
     // Etiquetas pequeñas integradas, solo para orientar.
     const smallLabels = [
-      ['Entrada', positions.entrada.x - 4, positions.entrada.y - 28, 0xf4c542],
-      ['Vera', positions.vera.x - 8, positions.vera.y - 44, 0x8dd7ff],
-      ['Cris', positions.cris.x + 2, positions.cris.y - 44, 0xffca7a],
-      ['Decisiones', positions.decision.x + 28, positions.decision.y - 34, 0xff5d5d],
+      ['Recepción Vera', leftRoom.x - 40, leftRoom.y - 112, 0x2f9fd7, 118],
+      ['Pasillo tareas', corridor.x + 26, corridor.y - 54, 0xffe0a8, 110],
+      ['Oficina Cris', rightRoom.x + 8, rightRoom.y - 142, 0xffa94d, 112],
+      ['Decisiones humanas', positions.decision.x + 18, positions.decision.y - 48, 0xff5d5d, 138],
     ] as const;
-    smallLabels.forEach(([label, x, y, color]) => {
+    smallLabels.forEach(([label, x, y, color, width]) => {
       const tag = new Graphics();
-      tag.roundRect(x - 38, y - 12, 76, 24, 9).fill({ color, alpha: 0.68 }).stroke({ width: 1, color: 0xffffff, alpha: 0.35 });
+      tag.roundRect(x - width / 2, y - 13, width, 26, 9).fill({ color, alpha: 0.72 }).stroke({ width: 1, color: 0xffffff, alpha: 0.38 });
       stage.addChild(tag);
-      const text = new Text({ text: label, style: { fill: '#ffffff', fontSize: 10, fontWeight: '800' } });
+      const text = new Text({ text: label, style: { fill: '#ffffff', fontSize: 10, fontWeight: '900' } });
       text.anchor.set(0.5);
       text.position.set(x, y + 1);
       stage.addChild(text);
@@ -325,20 +354,21 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
       ['Vera', 'vera_worker.png', positions.vera.x - 18, positions.vera.y + 34, 'vera'],
       ['Cris', 'cris_worker.png', positions.cris.x - 10, positions.cris.y + 38, 'cris'],
     ] as const;
-    const agentBodies: { body: Container; active: boolean; baseY: number }[] = [];
-    agents.forEach(([name, file, x, y, owner]) => {
+    const agentBodies: { body: Container; glow: Graphics; active: boolean; baseX: number; baseY: number; baseScale: number; phase: number }[] = [];
+    agents.forEach(([name, file, x, y, owner], idx) => {
       const active = activeOwners.has(owner);
       const glow = new Graphics();
-      glow.ellipse(x, y + 4, active ? 32 : 0, active ? 12 : 0).fill({ color: owner === 'vera' ? 0x2f9fd7 : 0xffca7a, alpha: active ? 0.24 : 0 });
+      glow.ellipse(x, y + 4, active ? 36 : 26, active ? 14 : 8).fill({ color: owner === 'vera' ? 0x2f9fd7 : 0xffca7a, alpha: active ? 0.28 : 0.12 });
       stage.addChild(glow);
       const body = new Container();
       const sprite = Sprite.from(`${assetBase}/${file}`);
       sprite.anchor.set(0.5, 1);
-      sprite.scale.set(owner === 'vera' ? 2.7 : 2.5);
+      const baseScale = owner === 'vera' ? 2.75 : 2.55;
+      sprite.scale.set(baseScale);
       body.addChild(sprite);
       body.position.set(x, y);
       stage.addChild(body);
-      agentBodies.push({ body, active, baseY: y });
+      agentBodies.push({ body, glow, active, baseX: x, baseY: y, baseScale, phase: idx * 1.7 });
       const nameText = new Text({ text: name, style: { fill: '#fff7e6', fontSize: 12, fontWeight: '800' } });
       nameText.anchor.set(0.5);
       nameText.position.set(x, y + 18);
@@ -395,11 +425,31 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
       }
     });
 
+    const flowDot = new Graphics();
+    flowDot.circle(0, 0, 6).fill({ color: 0xfff0be, alpha: 0.9 }).stroke({ width: 2, color: 0xffffff, alpha: 0.8 });
+    stage.addChild(flowDot);
+
     app.ticker.add(() => {
       const t = performance.now();
-      agentBodies.forEach(({ body, active, baseY }, idx) => {
-        body.y = baseY + (active ? Math.sin(t / 115 + idx) * 4 : 0);
+      agentBodies.forEach(({ body, glow, active, baseX, baseY, baseScale, phase }) => {
+        const idle = Math.sin(t / 260 + phase);
+        const work = Math.sin(t / 95 + phase);
+        body.x = baseX + idle * 1.2;
+        body.y = baseY + idle * 3.2 + (active ? work * 3.8 : 0);
+        body.rotation = Math.sin(t / 360 + phase) * 0.025 + (active ? Math.sin(t / 140 + phase) * 0.018 : 0);
+        body.scale.set(1 + Math.sin(t / 310 + phase) * 0.025);
+        glow.alpha = active ? 0.85 + Math.sin(t / 120 + phase) * 0.15 : 0.48 + Math.sin(t / 420 + phase) * 0.12;
+        glow.scale.set(active ? 1.08 + Math.sin(t / 150 + phase) * 0.08 : 1 + Math.sin(t / 520 + phase) * 0.05);
       });
+      const route = [positions.entrada, positions.vera, positions.cris, positions.decision];
+      const loop = (t / 1800) % 3;
+      const seg = Math.floor(loop);
+      const local = loop - seg;
+      const a = route[seg];
+      const b = route[seg + 1];
+      const eased = 0.5 - Math.cos(local * Math.PI) / 2;
+      flowDot.position.set(a.x + (b.x - a.x) * eased, a.y + 18 + (b.y - a.y) * eased + Math.sin(local * Math.PI) * -22);
+      flowDot.alpha = 0.35 + Math.sin(t / 180) * 0.25;
       movingSprites.forEach((sprite) => {
         const progress = Math.min(1, (t - sprite.started) / 820);
         const eased = 1 - Math.pow(1 - progress, 3);
