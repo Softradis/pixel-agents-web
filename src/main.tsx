@@ -63,6 +63,28 @@ const initialTasks: OfficeTask[] = [
 ];
 
 
+
+const kindMeta: Record<OfficeTask['kind'], { icon: string; label: string; tint: number }> = {
+  whatsapp: { icon: '💬', label: 'WhatsApp', tint: 0x25d366 },
+  email: { icon: '✉️', label: 'Resuelto', tint: 0x56d364 },
+  bug: { icon: '⚡', label: 'Bug', tint: 0xffb020 },
+  decision: { icon: '❗', label: 'Decisión', tint: 0xff5d5d },
+};
+
+function addZoneBadge(stage: Container, title: string, subtitle: string, x: number, y: number, color: number) {
+  const badge = new Graphics();
+  badge.roundRect(x - 76, y - 24, 152, 48, 14).fill({ color, alpha: 0.2 }).stroke({ width: 2, color, alpha: 0.75 });
+  stage.addChild(badge);
+  const text = new Text({ text: title, style: { fill: '#ffffff', fontSize: 13, fontWeight: '800' } });
+  text.anchor.set(0.5);
+  text.position.set(x, y - 7);
+  stage.addChild(text);
+  const sub = new Text({ text: subtitle, style: { fill: '#b9cee5', fontSize: 10, fontWeight: '600' } });
+  sub.anchor.set(0.5);
+  sub.position.set(x, y + 10);
+  stage.addChild(sub);
+}
+
 const assetBase = '/assets/kenney-isometric/Angle';
 
 function addIsoAsset(stage: Container, file: string, x: number, y: number, scale = 0.72, alpha = 1) {
@@ -114,18 +136,10 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     addIsoAsset(stage, 'bookStand_N.png', cx - 116, cy + 80, 0.55);
     addIsoAsset(stage, 'displayCaseOpen_N.png', cx + 190, cy + 74, 0.58);
 
-    const labels = [
-      ['Recepción Vera', cx - 210, cy - 165],
-      ['Mesa Cris', cx + 40, cy - 165],
-      ['Bandeja entrada', cx - 85, cy - 15],
-      ['Decisiones David', cx + 190, cy + 5],
-    ] as const;
-    labels.forEach(([label, x, y]) => {
-      const t = new Text({ text: label, style: { fill: '#dbeafe', fontSize: 15, fontWeight: '700' } });
-      t.anchor.set(0.5);
-      t.position.set(x, y);
-      stage.addChild(t);
-    });
+    addZoneBadge(stage, 'Recepción', 'Vera clasifica', cx - 210, cy - 165, 0x8dd7ff);
+    addZoneBadge(stage, 'Mesa técnica', 'Cris resuelve', cx + 40, cy - 165, 0xffca7a);
+    addZoneBadge(stage, 'Entrada', 'tareas nuevas', cx - 85, cy - 15, 0xf4c542);
+    addZoneBadge(stage, 'Decisiones', 'David desbloquea', cx + 190, cy + 5, 0xff5d5d);
 
     const positions: Record<Owner, { x: number; y: number }> = {
       entrada: { x: cx - 85, y: cy + 55 },
@@ -157,11 +171,14 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
       glow.circle(x, y + 12, active ? 36 : 0).fill({ color, alpha: active ? 0.16 : 0 });
       stage.addChild(glow);
       const body = new Graphics();
-      body.circle(x, y - 15, 16).fill(color);
-      body.roundRect(x - 20, y + 2, 40, 34, 10).fill(color).stroke({ width: active ? 4 : 2, color: active ? 0xffffff : 0xffffff, alpha: active ? 0.8 : 0.45 });
+      body.circle(x, y - 18, 17).fill(color);
+      body.roundRect(x - 22, y + 1, 44, 36, 12).fill(color).stroke({ width: active ? 4 : 2, color: active ? 0xffffff : 0xffffff, alpha: active ? 0.8 : 0.45 });
+      body.circle(x + 7, y - 21, 3).fill(0x07111f);
+      body.circle(x - 7, y - 21, 3).fill(0x07111f);
       stage.addChild(body);
       agentBodies.push({ body, active });
-      const nameText = new Text({ text: active ? `${name} · activo` : name, style: { fill: '#ffffff', fontSize: 13, fontWeight: '700' } });
+      const role = owner === 'vera' ? 'coordina' : 'técnica';
+      const nameText = new Text({ text: active ? `${name} · ${role} · activo` : `${name} · ${role}`, style: { fill: '#ffffff', fontSize: 13, fontWeight: '700' } });
       nameText.anchor.set(0.5);
       nameText.position.set(x, y + 55);
       stage.addChild(nameText);
@@ -186,18 +203,23 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
       const shadow = new Graphics();
       shadow.ellipse(x, y + 18, 42, 10).fill({ color: 0x000000, alpha: 0.18 });
       stage.addChild(shadow);
+      const meta = kindMeta[task.kind];
       const card = new Graphics();
-      card.roundRect(x - 42, y - 22, 84, 44, 10).fill(colors[task.status]).stroke({ width: selectedId === task.id ? 4 : 2, color: selectedId === task.id ? 0xffffff : 0x0b1220 });
+      card.roundRect(x - 48, y - 25, 96, 50, 12).fill(colors[task.status]).stroke({ width: selectedId === task.id ? 4 : 2, color: selectedId === task.id ? 0xffffff : meta.tint });
+      card.circle(x - 33, y - 13, 8).fill(meta.tint).stroke({ width: 2, color: 0xffffff, alpha: 0.75 });
       card.eventMode = 'static';
       card.cursor = 'pointer';
       card.on('pointertap', () => onSelect(task.id));
       stage.addChild(card);
 
-      const icon = task.kind === 'whatsapp' ? '💬' : task.kind === 'email' ? '✉️' : task.kind === 'bug' ? '⚡' : '❔';
-      const text = new Text({ text: icon, style: { fontSize: 22 } });
+      const text = new Text({ text: meta.icon, style: { fontSize: 22 } });
       text.anchor.set(0.5);
       text.position.set(x, y - 2);
       stage.addChild(text);
+      const typeLabel = new Text({ text: task.status === 'bloqueado' ? 'Necesita decisión' : meta.label, style: { fill: '#07111f', fontSize: 10, fontWeight: '900' } });
+      typeLabel.anchor.set(0.5);
+      typeLabel.position.set(x, y + 15);
+      stage.addChild(typeLabel);
       if (task.pauseLabel) {
         const pause = new Text({ text: task.pauseLabel, style: { fill: '#ffffff', fontSize: 12, fontWeight: '700', dropShadow: true } });
         pause.anchor.set(0.5);
