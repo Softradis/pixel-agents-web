@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Application, Container, Graphics, Sprite, Text } from 'pixi.js';
+import { Application, Assets, Container, Graphics, Sprite, Text } from 'pixi.js';
 import './style.css';
 
 type TaskStatus = 'esperando' | 'trabajando' | 'bloqueado' | 'resuelto';
@@ -86,6 +86,13 @@ function addZoneBadge(stage: Container, title: string, subtitle: string, x: numb
 }
 
 const assetBase = '/assets/kenney-isometric/Angle';
+const usedIsoAssetFiles = [
+  'floorCarpet_N.png', 'floorCarpet_S.png', 'floorCarpetEnd_W.png', 'floorCarpetSmall_N.png',
+  'wallBooks_N.png', 'wallDoorway_N.png', 'wallBooks_E.png', 'wallDoorway_E.png', 'wallBooks_W.png',
+  'bookcaseWideBooks_N.png', 'bookcaseWideBooks_E.png', 'bookcaseBooksLadder_N.png', 'candleStandDouble_N.png',
+  'bookStand_N.png', 'longTableChairs_W.png', 'longTableDecoratedChairsBooks_N.png', 'displayCaseOpen_N.png',
+  'libraryChair_N.png', 'libraryChair_E.png',
+];
 
 function addIsoAsset(stage: Container, file: string, x: number, y: number, scale = 0.72, alpha = 1) {
   const sprite = Sprite.from(`${assetBase}/${file}`);
@@ -107,7 +114,12 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
   const app = new Application();
   let destroyed = false;
 
-  app.init({ resizeTo: canvas, background: '#10151f', antialias: true }).then(() => {
+  app.init({ resizeTo: canvas, background: '#10151f', antialias: true }).then(async () => {
+    if (destroyed) {
+      app.destroy(true);
+      return;
+    }
+    await Assets.load(usedIsoAssetFiles.map((file) => `${assetBase}/${file}`));
     if (destroyed) {
       app.destroy(true);
       return;
@@ -225,7 +237,7 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
       ['Vera', positions.vera.x - 18, positions.vera.y - 12, 0x2f9fd7, 0xffffff, 'vera'],
       ['Cris', positions.cris.x + 14, positions.cris.y - 12, 0xb66a2c, 0xffe0b2, 'cris'],
     ] as const;
-    const agentBodies: { body: Container; active: boolean }[] = [];
+    const agentBodies: { body: Container; active: boolean; baseY: number }[] = [];
     agents.forEach(([name, x, y, color, accent, owner]) => {
       const active = activeOwners.has(owner);
       const glow = new Graphics();
@@ -260,7 +272,7 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
       body.addChild(badge);
       body.position.set(x, y);
       stage.addChild(body);
-      agentBodies.push({ body, active });
+      agentBodies.push({ body, active, baseY: y });
       const nameText = new Text({ text: name, style: { fill: '#fff7e6', fontSize: 12, fontWeight: '800' } });
       nameText.anchor.set(0.5);
       nameText.position.set(x, y + 58);
@@ -319,8 +331,8 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
 
     app.ticker.add(() => {
       const t = performance.now();
-      agentBodies.forEach(({ body, active }, idx) => {
-        body.y = active ? Math.sin(t / 115 + idx) * 4 : 0;
+      agentBodies.forEach(({ body, active, baseY }, idx) => {
+        body.y = baseY + (active ? Math.sin(t / 115 + idx) * 4 : 0);
       });
       movingSprites.forEach((sprite) => {
         const progress = Math.min(1, (t - sprite.started) / 820);
