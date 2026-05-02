@@ -7,11 +7,11 @@ type TaskStatus = 'esperando' | 'trabajando' | 'bloqueado' | 'resuelto';
 type Owner = 'entrada' | 'vera' | 'cris' | 'decision';
 type TimelineEvent = { id: number; text: string; status: TaskStatus; at: string };
 
-type LayoutKey = 'salaVera' | 'salaCris' | 'paredVeraIzq' | 'paredVeraFondo' | 'paredCrisIzq' | 'paredCrisFondo' | 'entrada' | 'decisiones' | 'vera' | 'cris' | 'muebleRecepcion' | 'mesaVera' | 'mesaCris' | 'sillonDecision';
+type LayoutKey = 'salaVera' | 'salaCris' | 'paredVeraIzq1' | 'paredVeraIzq2' | 'paredVeraIzq3' | 'paredVeraFondo1' | 'paredVeraFondo2' | 'paredCrisIzq1' | 'paredCrisIzq2' | 'paredCrisIzq3' | 'paredCrisFondo1' | 'paredCrisFondo2' | 'paredCrisFondo3' | 'entrada' | 'decisiones' | 'vera' | 'cris' | 'muebleRecepcion' | 'mesaVera' | 'mesaCris' | 'sillonDecision';
 type LayoutPoint = { x: number; y: number };
 type CompositionLayout = Partial<Record<LayoutKey, LayoutPoint>>;
 
-const layoutKeys: LayoutKey[] = ['salaVera', 'salaCris', 'paredVeraIzq', 'paredVeraFondo', 'paredCrisIzq', 'paredCrisFondo', 'entrada', 'decisiones', 'vera', 'cris', 'muebleRecepcion', 'mesaVera', 'mesaCris', 'sillonDecision'];
+const layoutKeys: LayoutKey[] = ['salaVera', 'salaCris', 'paredVeraIzq1', 'paredVeraIzq2', 'paredVeraIzq3', 'paredVeraFondo1', 'paredVeraFondo2', 'paredCrisIzq1', 'paredCrisIzq2', 'paredCrisIzq3', 'paredCrisFondo1', 'paredCrisFondo2', 'paredCrisFondo3', 'entrada', 'decisiones', 'vera', 'cris', 'muebleRecepcion', 'mesaVera', 'mesaCris', 'sillonDecision'];
 
 function cleanLayout(layout: CompositionLayout): CompositionLayout {
   const clean: CompositionLayout = {};
@@ -268,23 +268,23 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     officeTiles.forEach(([x, y, file]) => addIsoAsset(stage, file, x, y, 2.08, 1, 0.5, 0.5));
 
     // Paredes separadas: recepción de Vera a la izquierda y oficina técnica de Cris a la derecha.
-    addMovedAsset('paredVeraIzq', 'wall01_ent02_L.png', leftRoom.x - 198, leftRoom.y - 26, 2.28);
-    addMovedAsset('paredVeraIzq', 'wall01_sngl_L.png', leftRoom.x - 142, leftRoom.y - 74, 2.28);
-    addMovedAsset('paredVeraIzq', 'wall01_sngl_L.png', leftRoom.x - 86, leftRoom.y - 122, 2.28);
-    addMovedAsset('paredVeraFondo', 'wall01_sngl_R.png', leftRoom.x + 76, leftRoom.y - 132, 2.28);
-    addMovedAsset('paredVeraFondo', 'wall01_ent02_R.png', leftRoom.x + 136, leftRoom.y - 98, 2.28);
+    addMovedAsset('paredVeraIzq1', 'wall01_ent02_L.png', leftRoom.x - 198, leftRoom.y - 26, 2.28);
+    addMovedAsset('paredVeraIzq2', 'wall01_sngl_L.png', leftRoom.x - 142, leftRoom.y - 74, 2.28);
+    addMovedAsset('paredVeraIzq3', 'wall01_sngl_L.png', leftRoom.x - 86, leftRoom.y - 122, 2.28);
+    addMovedAsset('paredVeraFondo1', 'wall01_sngl_R.png', leftRoom.x + 76, leftRoom.y - 132, 2.28);
+    addMovedAsset('paredVeraFondo2', 'wall01_ent02_R.png', leftRoom.x + 136, leftRoom.y - 98, 2.28);
     addMovedAsset('entrada', 'door_front.png', leftRoom.x - 198, leftRoom.y + 82, 2.42);
-    addMovedAsset('paredVeraFondo', 'window01.png', leftRoom.x + 62, leftRoom.y - 140, 1.95);
-    addMovedAsset('paredVeraIzq', 'clock01.png', leftRoom.x - 92, leftRoom.y - 136, 1.85);
+    addMovedAsset('paredVeraFondo1', 'window01.png', leftRoom.x + 62, leftRoom.y - 140, 1.95);
+    addMovedAsset('paredVeraIzq3', 'clock01.png', leftRoom.x - 92, leftRoom.y - 136, 1.85);
 
-    addMovedAsset('paredCrisIzq', 'wall01_ent02_L.png', rightRoom.x - 198, rightRoom.y - 42, 2.28);
-    addMovedAsset('paredCrisIzq', 'wall01_sngl_L.png', rightRoom.x - 142, rightRoom.y - 90, 2.28);
-    addMovedAsset('paredCrisIzq', 'wall01_sngl_L.png', rightRoom.x - 86, rightRoom.y - 138, 2.28);
-    addMovedAsset('paredCrisFondo', 'wall01_sngl_R.png', rightRoom.x + 82, rightRoom.y - 150, 2.28);
-    addMovedAsset('paredCrisFondo', 'wall01_sngl_R.png', rightRoom.x + 146, rightRoom.y - 112, 2.28);
-    addMovedAsset('paredCrisFondo', 'wall01_ent02_R.png', rightRoom.x + 210, rightRoom.y - 74, 2.28);
-    addMovedAsset('paredCrisFondo', 'window01.png', rightRoom.x + 52, rightRoom.y - 158, 1.95);
-    addMovedAsset('paredCrisFondo', 'pinnednote01.png', rightRoom.x + 166, rightRoom.y - 122, 2.0);
+    addMovedAsset('paredCrisIzq1', 'wall01_ent02_L.png', rightRoom.x - 198, rightRoom.y - 42, 2.28);
+    addMovedAsset('paredCrisIzq2', 'wall01_sngl_L.png', rightRoom.x - 142, rightRoom.y - 90, 2.28);
+    addMovedAsset('paredCrisIzq3', 'wall01_sngl_L.png', rightRoom.x - 86, rightRoom.y - 138, 2.28);
+    addMovedAsset('paredCrisFondo1', 'wall01_sngl_R.png', rightRoom.x + 82, rightRoom.y - 150, 2.28);
+    addMovedAsset('paredCrisFondo2', 'wall01_sngl_R.png', rightRoom.x + 146, rightRoom.y - 112, 2.28);
+    addMovedAsset('paredCrisFondo3', 'wall01_ent02_R.png', rightRoom.x + 210, rightRoom.y - 74, 2.28);
+    addMovedAsset('paredCrisFondo1', 'window01.png', rightRoom.x + 52, rightRoom.y - 158, 1.95);
+    addMovedAsset('paredCrisFondo2', 'pinnednote01.png', rightRoom.x + 166, rightRoom.y - 122, 2.0);
 
     const positions: Record<Owner, { x: number; y: number }> = {
       entrada: withOffset('entrada', leftRoom.x - 176, leftRoom.y + 72),
@@ -454,11 +454,18 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     if (compositionMode) {
       const handles: { key: LayoutKey; label: string; x: number; y: number; color: number }[] = [
         { key: 'salaVera', label: 'suelo Vera', x: leftRoom.x - 8, y: leftRoom.y - 28, color: 0x2f9fd7 },
-        { key: 'paredVeraIzq', label: 'pared Vera izq', x: leftRoom.x - 142 + offset('paredVeraIzq').x, y: leftRoom.y - 92 + offset('paredVeraIzq').y, color: 0x8dd7ff },
-        { key: 'paredVeraFondo', label: 'pared Vera fondo', x: leftRoom.x + 102 + offset('paredVeraFondo').x, y: leftRoom.y - 118 + offset('paredVeraFondo').y, color: 0x8dd7ff },
+        { key: 'paredVeraIzq1', label: 'V izq 1', x: leftRoom.x - 198 + offset('paredVeraIzq1').x, y: leftRoom.y - 26 + offset('paredVeraIzq1').y, color: 0x8dd7ff },
+        { key: 'paredVeraIzq2', label: 'V izq 2', x: leftRoom.x - 142 + offset('paredVeraIzq2').x, y: leftRoom.y - 74 + offset('paredVeraIzq2').y, color: 0x8dd7ff },
+        { key: 'paredVeraIzq3', label: 'V izq 3', x: leftRoom.x - 86 + offset('paredVeraIzq3').x, y: leftRoom.y - 122 + offset('paredVeraIzq3').y, color: 0x8dd7ff },
+        { key: 'paredVeraFondo1', label: 'V fondo 1', x: leftRoom.x + 76 + offset('paredVeraFondo1').x, y: leftRoom.y - 132 + offset('paredVeraFondo1').y, color: 0x8dd7ff },
+        { key: 'paredVeraFondo2', label: 'V fondo 2', x: leftRoom.x + 136 + offset('paredVeraFondo2').x, y: leftRoom.y - 98 + offset('paredVeraFondo2').y, color: 0x8dd7ff },
         { key: 'salaCris', label: 'suelo Cris', x: rightRoom.x + 4, y: rightRoom.y - 40, color: 0xffa94d },
-        { key: 'paredCrisIzq', label: 'pared Cris izq', x: rightRoom.x - 142 + offset('paredCrisIzq').x, y: rightRoom.y - 108 + offset('paredCrisIzq').y, color: 0xffca7a },
-        { key: 'paredCrisFondo', label: 'pared Cris fondo', x: rightRoom.x + 148 + offset('paredCrisFondo').x, y: rightRoom.y - 128 + offset('paredCrisFondo').y, color: 0xffca7a },
+        { key: 'paredCrisIzq1', label: 'C izq 1', x: rightRoom.x - 198 + offset('paredCrisIzq1').x, y: rightRoom.y - 42 + offset('paredCrisIzq1').y, color: 0xffca7a },
+        { key: 'paredCrisIzq2', label: 'C izq 2', x: rightRoom.x - 142 + offset('paredCrisIzq2').x, y: rightRoom.y - 90 + offset('paredCrisIzq2').y, color: 0xffca7a },
+        { key: 'paredCrisIzq3', label: 'C izq 3', x: rightRoom.x - 86 + offset('paredCrisIzq3').x, y: rightRoom.y - 138 + offset('paredCrisIzq3').y, color: 0xffca7a },
+        { key: 'paredCrisFondo1', label: 'C fondo 1', x: rightRoom.x + 82 + offset('paredCrisFondo1').x, y: rightRoom.y - 150 + offset('paredCrisFondo1').y, color: 0xffca7a },
+        { key: 'paredCrisFondo2', label: 'C fondo 2', x: rightRoom.x + 146 + offset('paredCrisFondo2').x, y: rightRoom.y - 112 + offset('paredCrisFondo2').y, color: 0xffca7a },
+        { key: 'paredCrisFondo3', label: 'C fondo 3', x: rightRoom.x + 210 + offset('paredCrisFondo3').x, y: rightRoom.y - 74 + offset('paredCrisFondo3').y, color: 0xffca7a },
         { key: 'entrada', label: 'entrada', x: positions.entrada.x, y: positions.entrada.y, color: 0xf4c542 },
         { key: 'decisiones', label: 'decisiones', x: positions.decision.x, y: positions.decision.y, color: 0xff5d5d },
         { key: 'vera', label: 'Vera', x: positions.vera.x - 18, y: positions.vera.y + 34, color: 0x8dd7ff },
