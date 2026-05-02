@@ -232,3 +232,14 @@ Se mantiene el núcleo del MVP:
 - botón `Copiar layout` para exportar JSON.
 
 Esto es el primer paso hacia una librería editable real. El objetivo es que David pueda montar la oficina visualmente antes de congelar un layout base.
+
+## Librería ampliada de assets
+
+El editor de `pixel-agents` ya carga la librería ampliada del repo de referencia:
+
+- 25 familias de muebles/objetos, expandidas en variantes útiles de frente/lateral/trasera cuando existen,
+- 9 suelos copiados al proyecto para fases posteriores,
+- 6 personajes copiados al proyecto para fases posteriores,
+- catálogo agrupable por categoría: mesas, sillas, pared, decoración, electrónica y varios.
+
+La edición actual coloca muebles/objetos sobre el grid y exporta JSON. Suelos/personajes están preparados como assets locales, pero la edición visual de capas de suelo/personajes queda para la siguiente fase.
