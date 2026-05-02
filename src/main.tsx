@@ -133,65 +133,65 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     const root = new Graphics();
     stage.addChild(root);
     const cx = app.renderer.width / 2;
-    const cy = app.renderer.height / 2 + 90;
+    const cy = app.renderer.height / 2 + 105;
 
     // Habitación continua. La geometría manual queda como base/sombra mínima;
     // el peso visual lo ponen los tiles reales del pack Kenney.
     const roomShadow = new Graphics();
     roomShadow.poly([
-      cx, cy - 250,
-      cx + 445, cy - 28,
-      cx + 310, cy + 218,
-      cx - 430, cy + 218,
-      cx - 535, cy - 18,
+      cx, cy - 205,
+      cx + 360, cy - 24,
+      cx + 250, cy + 178,
+      cx - 350, cy + 178,
+      cx - 430, cy - 12,
     ]).fill({ color: 0x2b1d13, alpha: 0.42 });
     stage.addChild(roomShadow);
 
     const floor = new Graphics();
     floor.poly([
-      cx, cy - 238,
-      cx + 410, cy - 32,
-      cx + 292, cy + 194,
-      cx - 405, cy + 194,
-      cx - 500, cy - 18,
+      cx, cy - 196,
+      cx + 333, cy - 28,
+      cx + 238, cy + 156,
+      cx - 326, cy + 156,
+      cx - 402, cy - 10,
     ]).fill(0xcfa56a).stroke({ width: 2, color: 0x6c4b2d, alpha: 0.35 });
     stage.addChild(floor);
 
     // Suelo/caminos: alfombras Kenney, no badges flotantes.
-    addIsoAsset(stage, 'floorCarpet_N.png', cx - 286, cy + 38, 0.78, 0.96);
-    addIsoAsset(stage, 'floorCarpet_N.png', cx - 128, cy + 8, 0.78, 0.96);
-    addIsoAsset(stage, 'floorCarpet_S.png', cx + 48, cy + 28, 0.82, 0.96);
-    addIsoAsset(stage, 'floorCarpet_S.png', cx + 210, cy + 72, 0.75, 0.94);
-    addIsoAsset(stage, 'floorCarpetEnd_W.png', cx + 330, cy + 108, 0.68, 0.93);
-    addIsoAsset(stage, 'floorCarpetSmall_N.png', cx - 20, cy + 118, 0.72, 0.92);
+    addIsoAsset(stage, 'floorCarpet_N.png', cx - 218, cy + 34, 0.54, 0.96);
+    addIsoAsset(stage, 'floorCarpet_N.png', cx - 86, cy + 6, 0.54, 0.96);
+    addIsoAsset(stage, 'floorCarpet_S.png', cx + 52, cy + 30, 0.56, 0.96);
+    addIsoAsset(stage, 'floorCarpet_S.png', cx + 170, cy + 66, 0.5, 0.94);
+    addIsoAsset(stage, 'floorCarpetEnd_W.png', cx + 250, cy + 94, 0.46, 0.93);
+    addIsoAsset(stage, 'floorCarpetSmall_N.png', cx - 10, cy + 104, 0.5, 0.92);
 
     // Paredes del pack canónico: wallBooks/wallDoorway sustituyen la pared dibujada.
-    addIsoAsset(stage, 'wallBooks_N.png', cx - 300, cy - 126, 1.02);
-    addIsoAsset(stage, 'wallBooks_N.png', cx - 110, cy - 170, 1.02);
-    addIsoAsset(stage, 'wallDoorway_N.png', cx + 80, cy - 170, 1.02);
-    addIsoAsset(stage, 'wallBooks_N.png', cx + 260, cy - 126, 1.02);
-    addIsoAsset(stage, 'wallBooks_E.png', cx + 354, cy - 32, 1.02);
-    addIsoAsset(stage, 'wallDoorway_E.png', cx + 304, cy + 80, 1.02);
-    addIsoAsset(stage, 'wallBooks_W.png', cx - 430, cy - 16, 0.96);
+    addIsoAsset(stage, 'wallBooks_N.png', cx - 238, cy - 92, 0.7);
+    addIsoAsset(stage, 'wallBooks_N.png', cx - 92, cy - 126, 0.7);
+    addIsoAsset(stage, 'wallDoorway_N.png', cx + 54, cy - 126, 0.7);
+    addIsoAsset(stage, 'wallBooks_N.png', cx + 190, cy - 92, 0.7);
+    addIsoAsset(stage, 'wallBooks_E.png', cx + 272, cy - 12, 0.68);
+    addIsoAsset(stage, 'wallDoorway_E.png', cx + 232, cy + 72, 0.68);
+    addIsoAsset(stage, 'wallBooks_W.png', cx - 330, cy - 2, 0.64);
 
     // Biblioteca/mobiliario pegado a paredes y mesas reales.
-    addIsoAsset(stage, 'bookcaseWideBooks_N.png', cx - 310, cy - 82, 0.78);
-    addIsoAsset(stage, 'bookcaseWideBooks_E.png', cx + 350, cy + 18, 0.76);
-    addIsoAsset(stage, 'bookcaseBooksLadder_N.png', cx - 20, cy - 104, 0.72);
-    addIsoAsset(stage, 'candleStandDouble_N.png', cx + 178, cy - 98, 0.62);
+    addIsoAsset(stage, 'bookcaseWideBooks_N.png', cx - 236, cy - 58, 0.5);
+    addIsoAsset(stage, 'bookcaseWideBooks_E.png', cx + 270, cy + 28, 0.48);
+    addIsoAsset(stage, 'bookcaseBooksLadder_N.png', cx - 12, cy - 72, 0.46);
+    addIsoAsset(stage, 'candleStandDouble_N.png', cx + 150, cy - 58, 0.42);
 
     const positions: Record<Owner, { x: number; y: number }> = {
-      entrada: { x: cx - 300, y: cy + 78 },
-      vera: { x: cx - 150, y: cy + 8 },
-      cris: { x: cx + 95, y: cy + 8 },
-      decision: { x: cx + 290, y: cy + 95 },
+      entrada: { x: cx - 236, y: cy + 66 },
+      vera: { x: cx - 112, y: cy + 12 },
+      cris: { x: cx + 76, y: cy + 14 },
+      decision: { x: cx + 220, y: cy + 84 },
     };
 
     // Mobiliario real de cada zona.
-    addIsoAsset(stage, 'bookStand_N.png', positions.entrada.x, positions.entrada.y + 25, 0.72);
-    addIsoAsset(stage, 'longTableChairs_W.png', positions.vera.x, positions.vera.y + 30, 0.72);
-    addIsoAsset(stage, 'longTableDecoratedChairsBooks_N.png', positions.cris.x, positions.cris.y + 30, 0.72);
-    addIsoAsset(stage, 'displayCaseOpen_N.png', positions.decision.x, positions.decision.y + 28, 0.7);
+    addIsoAsset(stage, 'bookStand_N.png', positions.entrada.x, positions.entrada.y + 18, 0.46);
+    addIsoAsset(stage, 'longTableChairs_W.png', positions.vera.x, positions.vera.y + 24, 0.48);
+    addIsoAsset(stage, 'longTableDecoratedChairsBooks_N.png', positions.cris.x, positions.cris.y + 24, 0.48);
+    addIsoAsset(stage, 'displayCaseOpen_N.png', positions.decision.x, positions.decision.y + 20, 0.46);
 
     // Caminos sutiles: narrativa, no UI de dashboard.
     const paths = new Graphics();
@@ -208,42 +208,42 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
     if (activeOwners.has('decision')) {
       const decisionPulse = new Graphics();
       decisionPulse.poly([
-        positions.decision.x, positions.decision.y - 50,
-        positions.decision.x + 105, positions.decision.y,
-        positions.decision.x, positions.decision.y + 50,
-        positions.decision.x - 105, positions.decision.y,
+        positions.decision.x, positions.decision.y - 38,
+        positions.decision.x + 78, positions.decision.y,
+        positions.decision.x, positions.decision.y + 38,
+        positions.decision.x - 78, positions.decision.y,
       ]).stroke({ width: 5, color: 0xff5d5d, alpha: 0.78 });
       stage.addChild(decisionPulse);
     }
 
     // Etiquetas pequeñas integradas, solo para orientar.
     const smallLabels = [
-      ['Entrada', positions.entrada.x, positions.entrada.y - 60, 0xf4c542],
-      ['Vera', positions.vera.x, positions.vera.y - 70, 0x8dd7ff],
-      ['Cris', positions.cris.x, positions.cris.y - 70, 0xffca7a],
-      ['Decisiones', positions.decision.x, positions.decision.y - 62, 0xff5d5d],
+      ['Entrada', positions.entrada.x, positions.entrada.y - 46, 0xf4c542],
+      ['Vera', positions.vera.x, positions.vera.y - 52, 0x8dd7ff],
+      ['Cris', positions.cris.x, positions.cris.y - 52, 0xffca7a],
+      ['Decisiones', positions.decision.x, positions.decision.y - 46, 0xff5d5d],
     ] as const;
     smallLabels.forEach(([label, x, y, color]) => {
       const tag = new Graphics();
-      tag.roundRect(x - 45, y - 14, 90, 28, 10).fill({ color, alpha: 0.68 }).stroke({ width: 1, color: 0xffffff, alpha: 0.35 });
+      tag.roundRect(x - 38, y - 12, 76, 24, 9).fill({ color, alpha: 0.68 }).stroke({ width: 1, color: 0xffffff, alpha: 0.35 });
       stage.addChild(tag);
-      const text = new Text({ text: label, style: { fill: '#ffffff', fontSize: 12, fontWeight: '800' } });
+      const text = new Text({ text: label, style: { fill: '#ffffff', fontSize: 10, fontWeight: '800' } });
       text.anchor.set(0.5);
       text.position.set(x, y + 1);
       stage.addChild(text);
     });
 
     const agents = [
-      ['Vera', positions.vera.x - 18, positions.vera.y - 12, 0x2f9fd7, 0xffffff, 'vera'],
-      ['Cris', positions.cris.x + 14, positions.cris.y - 12, 0xb66a2c, 0xffe0b2, 'cris'],
+      ['Vera', positions.vera.x - 10, positions.vera.y - 10, 0x2f9fd7, 0xffffff, 'vera'],
+      ['Cris', positions.cris.x + 10, positions.cris.y - 10, 0xb66a2c, 0xffe0b2, 'cris'],
     ] as const;
     const agentBodies: { body: Container; active: boolean; baseY: number }[] = [];
     agents.forEach(([name, x, y, color, accent, owner]) => {
       const active = activeOwners.has(owner);
       const glow = new Graphics();
-      glow.ellipse(x, y + 18, active ? 38 : 0, active ? 18 : 0).fill({ color, alpha: active ? 0.2 : 0 });
+      glow.ellipse(x, y + 12, active ? 26 : 0, active ? 12 : 0).fill({ color, alpha: active ? 0.2 : 0 });
       stage.addChild(glow);
-      addIsoAsset(stage, owner === 'vera' ? 'libraryChair_N.png' : 'libraryChair_E.png', x + (owner === 'vera' ? -18 : 22), y + 48, 0.38, 0.92);
+      addIsoAsset(stage, owner === 'vera' ? 'libraryChair_N.png' : 'libraryChair_E.png', x + (owner === 'vera' ? -12 : 16), y + 36, 0.26, 0.92);
 
       // Fallback documentado: el pack canónico no trae personajes. Evitamos los
       // círculos/rectángulos crudos y usamos una silueta isométrica temporal.
@@ -271,11 +271,12 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
       badge.position.set(0, 13);
       body.addChild(badge);
       body.position.set(x, y);
+      body.scale.set(0.72);
       stage.addChild(body);
       agentBodies.push({ body, active, baseY: y });
       const nameText = new Text({ text: name, style: { fill: '#fff7e6', fontSize: 12, fontWeight: '800' } });
       nameText.anchor.set(0.5);
-      nameText.position.set(x, y + 58);
+      nameText.position.set(x, y + 44);
       stage.addChild(nameText);
     });
 
@@ -283,39 +284,39 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
 
     tasks.forEach((task, index) => {
       const pos = positions[task.owner];
-      const slotX = (index % 3) * 30 - 30;
-      const slotY = Math.floor(index / 3) * 28;
+      const slotX = (index % 3) * 24 - 24;
+      const slotY = Math.floor(index / 3) * 22;
       const from = task.fromOwner ? positions[task.fromOwner] : pos;
       const x = (task.fromOwner ? from.x : pos.x) + slotX;
       const y = (task.fromOwner ? from.y : pos.y) + slotY;
       const meta = kindMeta[task.kind];
 
       const shadow = new Graphics();
-      shadow.ellipse(x, y + 18, 36, 9).fill({ color: 0x000000, alpha: 0.22 });
+      shadow.ellipse(x, y + 14, 26, 7).fill({ color: 0x000000, alpha: 0.22 });
       stage.addChild(shadow);
 
       // Objeto físico pequeño dentro de la habitación.
       const card = new Graphics();
       if (task.status === 'bloqueado') {
-        card.roundRect(x - 44, y - 26, 88, 52, 10).fill(0xd34a3f).stroke({ width: selectedId === task.id ? 4 : 2, color: 0xffe0d6 });
+        card.roundRect(x - 34, y - 20, 68, 40, 8).fill(0xd34a3f).stroke({ width: selectedId === task.id ? 3 : 2, color: 0xffe0d6 });
       } else if (task.status === 'resuelto') {
-        card.roundRect(x - 42, y - 24, 84, 48, 10).fill(0x56d364).stroke({ width: selectedId === task.id ? 4 : 2, color: 0xe6ffed });
+        card.roundRect(x - 33, y - 19, 66, 38, 8).fill(0x56d364).stroke({ width: selectedId === task.id ? 3 : 2, color: 0xe6ffed });
       } else {
-        card.roundRect(x - 42, y - 24, 84, 48, 10).fill(0xf0d6a3).stroke({ width: selectedId === task.id ? 4 : 2, color: meta.tint });
+        card.roundRect(x - 33, y - 19, 66, 38, 8).fill(0xf0d6a3).stroke({ width: selectedId === task.id ? 3 : 2, color: meta.tint });
       }
       card.eventMode = 'static';
       card.cursor = 'pointer';
       card.on('pointertap', () => onSelect(task.id));
       stage.addChild(card);
 
-      const text = new Text({ text: meta.icon, style: { fontSize: 22 } });
+      const text = new Text({ text: meta.icon, style: { fontSize: 16 } });
       text.anchor.set(0.5);
       text.position.set(x, y - 6);
       stage.addChild(text);
 
-      const label = new Text({ text: task.status === 'bloqueado' ? 'DECISIÓN' : task.status === 'resuelto' ? 'OK' : meta.label, style: { fill: '#33220f', fontSize: 10, fontWeight: '900' } });
+      const label = new Text({ text: task.status === 'bloqueado' ? 'DECISIÓN' : task.status === 'resuelto' ? 'OK' : meta.label, style: { fill: '#33220f', fontSize: 8, fontWeight: '900' } });
       label.anchor.set(0.5);
-      label.position.set(x, y + 15);
+      label.position.set(x, y + 11);
       stage.addChild(label);
 
       if (task.pauseLabel) {
@@ -341,7 +342,7 @@ function drawOffice(canvas: HTMLDivElement, tasks: OfficeTask[], selectedId: num
         const y = sprite.from.y + (sprite.to.y - sprite.from.y) * eased + Math.sin(progress * Math.PI) * -18;
         sprite.card.position.set(x - sprite.from.x, y - sprite.from.y);
         sprite.icon.position.set(x, y - 6);
-        sprite.label.position.set(x, y + 15);
+        sprite.label.position.set(x, y + 11);
       });
     });
   });
