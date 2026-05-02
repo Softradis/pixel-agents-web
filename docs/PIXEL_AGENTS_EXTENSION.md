@@ -171,3 +171,28 @@ Investigar el repo en serio y decidir si `Oficina Familia` debe evolucionar haci
 - personajes animados con rutas,
 - estados visuales conectados a eventos reales de OpenClaw,
 - soporte futuro para varios agentes.
+
+## MVP inicial aplicado
+
+Rama creada:
+
+```text
+pixel-agents
+```
+
+Preview separada:
+
+```text
+http://backuptools:4402/
+```
+
+Primer MVP implementado:
+
+- Vera y Cris se renderizan como sprites pixel animados.
+- Los personajes usan frames del spritesheet para caminar/trabajar.
+- La oficina usa grid top-down por tiles.
+- Hay rutas calculadas por BFS entre recepción, Vera, Cris y decisiones.
+- Las tareas conservan el flujo existente y los estados verde/rojo.
+- `main` y `visual-room` quedan intactas.
+
+Este MVP no intenta portar toda la extensión VS Code; solo prueba si la dirección visual y técnica de `pablodelucca/pixel-agents` gana frente al enfoque isométrico.
