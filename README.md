@@ -1,6 +1,6 @@
-# Oficina Familia
+# pixel-agents-web
 
-Visual office prototype for making AI assistant work visible: incoming WhatsApp events, task ownership, handoffs, decisions, and completion states are represented as a small pixel-art office with Vera and Cris moving between work points.
+Web visual office prototype for making AI assistant work visible: incoming WhatsApp events, task ownership, handoffs, decisions, and completion states are represented as a small pixel-art office with Vera and Cris moving between work points.
 
 The goal is simple: instead of showing only logs or labels, the scene should make it obvious when something arrives, who is handling it, where they work, when a human decision is needed, and when the real reply has actually been sent.
 
@@ -81,7 +81,7 @@ Use **Copiar layout** to export the current `elements`, `anchors`, and `anchorDi
 
 ## Credits
 
-This project uses and adapts pixel-art ideas/assets inspired by:
+This project uses and adapts pixel-art ideas/assets inspired by Pixel Agents:
 
 - [`pablodelucca/pixel-agents`](https://github.com/pablodelucca/pixel-agents)
 
