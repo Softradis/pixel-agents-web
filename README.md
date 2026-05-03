@@ -81,7 +81,7 @@ Use **Copiar layout** to export the current `elements`, `anchors`, and `anchorDi
 
 ## Community & Contributing
 
-Use [Issues](https://github.com/Softradis/oficinaFamilia/issues) to report bugs or request new features. For open questions, design ideas, implementation tradeoffs, and general conversation, join [Discussions](https://github.com/Softradis/oficinaFamilia/discussions).
+Use [Issues](https://github.com/Softradis/pixel-agents-web/issues) to report bugs or request new features. For open questions, design ideas, implementation tradeoffs, and general conversation, join [Discussions](https://github.com/Softradis/pixel-agents-web/discussions).
 
 See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for instructions on how to contribute, open useful bug reports, propose features, and submit pull requests.
 
