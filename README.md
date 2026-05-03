@@ -79,6 +79,21 @@ Open the app and use **Editor elementos** to edit:
 
 Use **Copiar layout** to export the current `elements`, `anchors`, and `anchorDirections` JSON.
 
+## Community & Contributing
+
+Use [Issues](https://github.com/Softradis/oficinaFamilia/issues) to report bugs or request new features. For open questions, design ideas, implementation tradeoffs, and general conversation, join [Discussions](https://github.com/Softradis/oficinaFamilia/discussions).
+
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for instructions on how to contribute, open useful bug reports, propose features, and submit pull requests.
+
+Please read our [`Code of Conduct`](./CODE_OF_CONDUCT.md) before participating.
+
+## Supporting the Project
+
+If you find Pixel Agents Web useful, consider supporting its development:
+
+[![Sponsor on GitHub](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?logo=githubsponsors)](https://github.com/sponsors/Softradis)
+[![Support on Ko-fi](https://img.shields.io/badge/Support-Ko--fi-ff5e5b?logo=kofi)](https://ko-fi.com/softradis)
+
 ## Credits
 
 This project uses and adapts pixel-art ideas/assets inspired by Pixel Agents:
