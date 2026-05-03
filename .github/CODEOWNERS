@@ -1,6 +1,5 @@
-# Replace this placeholder with your GitHub username, organization team, or public maintainer email.
-# Examples:
+# Public code owner for repository-wide changes.
+# GitHub also supports usernames and teams, for example:
 # * @your-org/maintainers
-# * @your-github-user
 
-* @Softradis
+* david.robledo@softradis.com
