@@ -90,6 +90,7 @@ Please read our [`Code of Conduct`](./CODE_OF_CONDUCT.md) before participating.
 If you find Pixel Agents Web useful, consider supporting its development:
 
 [![Sponsor on GitHub](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?logo=githubsponsors)](https://github.com/sponsors/Softradis)
+[![Support on Patreon](https://img.shields.io/badge/Support-Patreon-f96854?logo=patreon)](https://www.patreon.com/empresarioMadri)
 [![Support on Ko-fi](https://img.shields.io/badge/Support-Ko--fi-ff5e5b?logo=kofi)](https://ko-fi.com/softradis)
 
 ## Credits
