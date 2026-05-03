@@ -1,29 +1,29 @@
-# PROJECT_CONTROL · Oficina Familia
+# Project Control · pixel-agents-web
+
+## Maintainer workflow
+
+This file records lightweight project operating notes for maintainers.
 
 ## Roles
 
-- **Cris**: dirección y control del proyecto. Mantiene alcance, prioridades, tareas, estado y validación.
-- **Vera**: propone e implementa. Convierte ideas visuales/técnicas en prototipos verificables.
-- **David**: owner del producto. Valida hitos y decisiones importantes.
+- **Maintainers:** review scope, priorities, issues, releases, and pull requests.
+- **Contributors:** propose improvements through issues, discussions, and focused pull requests.
+- **Users:** report bugs, request features, and share feedback about whether the visual workflow is understandable.
 
-## Regla principal
+## Main rule
 
-Primero una demo mínima operativa. Nada de construir una súper oficina antes de probar si la metáfora funciona.
+Keep the demo small, understandable, and verifiable. Avoid adding complexity unless it makes assistant work clearer.
 
-## Criterio de aceptación actual
+## Acceptance criteria
 
-Al mirar la demo durante 30 segundos, alguien debe entender:
+A change is useful when it helps a viewer understand one or more of these states without reading logs:
 
-- que hay una oficina viva,
-- que Vera recibe/clasifica,
-- que Cris resuelve o se bloquea con tareas técnicas,
-- que los colores indican estado.
+- an item arrived,
+- an agent is working,
+- work was handed off,
+- a human decision is needed,
+- work was completed.
 
-## Tarea actual para Vera
+## Current task focus
 
-Proponer e implementar un prototipo visual muy pequeño con:
-
-- plano isométrico,
-- Vera,
-- Cris,
-- tres tareas iniciales: WhatsApp entrante, bug técnico y tarea resuelta.
+Maintain a public-ready prototype with clear documentation, reproducible local setup, and clean examples that do not depend on any private deployment environment.

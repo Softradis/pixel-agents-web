@@ -142,7 +142,7 @@ const initialTasks: OfficeTask[] = [
     kind: 'whatsapp',
     status: 'esperando',
     owner: 'entrada',
-    detail: 'Mensaje nuevo entrando por recepción. Vera lo recogerá y clasificará.',
+    detail: 'Mensaje nuevo entrando por recepción. El agente A lo recogerá y clasificará.',
   },
   {
     id: 2,
@@ -150,7 +150,7 @@ const initialTasks: OfficeTask[] = [
     kind: 'bug',
     status: 'trabajando',
     owner: 'cris',
-    detail: 'Incidencia técnica ya derivada a Cris. Está diagnosticando el problema.',
+    detail: 'Incidencia técnica ya derivada al agente B. Está diagnosticando el problema.',
   },
   {
     id: 3,
@@ -158,7 +158,7 @@ const initialTasks: OfficeTask[] = [
     kind: 'email',
     status: 'resuelto',
     owner: 'cris',
-    detail: 'Trabajo terminado: Cris dejó una tarjeta verde de resuelto.',
+    detail: 'Trabajo terminado: el agente B dejó una tarjeta verde de resuelto.',
   },
 ];
 
@@ -322,7 +322,7 @@ const blocked = new Set<string>([
   ...Array.from({ length: layout.cols }, (_, col) => `${col}:${layout.rows - 1}`),
   ...Array.from({ length: layout.rows }, (_, row) => `0:${row}`),
   ...Array.from({ length: layout.rows }, (_, row) => `${layout.cols - 1}:${row}`),
-  // room partitions: right side split into system room and Cris/decision room, with open door gaps.
+  // room partitions: right side split into system room and agent B/decision room, with open door gaps.
   ...Array.from({ length: 3 }, (_, i) => `${15 + i}:6`),
   ...Array.from({ length: 3 }, (_, i) => `${20 + i}:6`),
   '12:1', '12:2', '12:3', '12:4', '12:5', '12:10', '12:11', '12:12', '12:13',
@@ -388,20 +388,20 @@ function ownerRoute(owner: Owner): Tile {
 }
 
 function describeEvent(task: OfficeTask) {
-  if (task.owner === 'entrada') return `Vera recoge y clasifica: ${task.title}`;
-  if (task.owner === 'vera') return `Vera deriva a Cris: ${task.title}`;
-  if (task.owner === 'cris') return task.id % 3 === 0 ? `Cris se bloquea y pide decisión: ${task.title}` : `Cris resuelve: ${task.title}`;
-  return `David desbloquea y cierra: ${task.title}`;
+  if (task.owner === 'entrada') return `Agente A recoge y clasifica: ${task.title}`;
+  if (task.owner === 'vera') return `Agente A deriva a agente B: ${task.title}`;
+  if (task.owner === 'cris') return task.id % 3 === 0 ? `Agente B se bloquea y pide decisión: ${task.title}` : `Agente B resuelve: ${task.title}`;
+  return `La decisión humana desbloquea y cierra: ${task.title}`;
 }
 
 function nextStatus(task: OfficeTask): OfficeTask {
-  if (task.owner === 'entrada') return { ...task, fromOwner: 'entrada', reactingOwner: 'vera', pauseLabel: 'clasificando…', owner: 'vera', status: 'trabajando', detail: 'Vera está clasificando el mensaje.' };
-  if (task.owner === 'vera') return { ...task, fromOwner: 'vera', reactingOwner: 'cris', pauseLabel: 'derivando…', owner: 'cris', status: 'trabajando', detail: 'Cris ejecuta diagnóstico técnico.' };
+  if (task.owner === 'entrada') return { ...task, fromOwner: 'entrada', reactingOwner: 'vera', pauseLabel: 'clasificando…', owner: 'vera', status: 'trabajando', detail: 'El agente A está clasificando el mensaje.' };
+  if (task.owner === 'vera') return { ...task, fromOwner: 'vera', reactingOwner: 'cris', pauseLabel: 'derivando…', owner: 'cris', status: 'trabajando', detail: 'El agente B ejecuta diagnóstico técnico.' };
   if (task.owner === 'cris') {
     const blockedTask = task.id % 3 === 0;
-    return { ...task, fromOwner: 'cris', reactingOwner: blockedTask ? 'decision' : 'cris', pauseLabel: blockedTask ? 'bloqueado' : 'resuelto', owner: blockedTask ? 'decision' : 'cris', status: blockedTask ? 'bloqueado' : 'resuelto', detail: blockedTask ? 'Necesita decisión humana de David.' : 'Cris dejó la tarea resuelta.' };
+    return { ...task, fromOwner: 'cris', reactingOwner: blockedTask ? 'decision' : 'cris', pauseLabel: blockedTask ? 'bloqueado' : 'resuelto', owner: blockedTask ? 'decision' : 'cris', status: blockedTask ? 'bloqueado' : 'resuelto', detail: blockedTask ? 'Necesita decisión humana.' : 'El agente B dejó la tarea resuelta.' };
   }
-  return { ...task, fromOwner: 'decision', reactingOwner: 'decision', pauseLabel: 'cerrado', status: 'resuelto', detail: 'David tomó la decisión y la tarea queda cerrada.' };
+  return { ...task, fromOwner: 'decision', reactingOwner: 'decision', pauseLabel: 'cerrado', status: 'resuelto', detail: 'La decisión humana se tomó y la tarea queda cerrada.' };
 }
 
 function taskFromEvent(event: OfficeEvent, current?: OfficeTask): OfficeTask {
@@ -414,8 +414,8 @@ function taskFromEvent(event: OfficeEvent, current?: OfficeTask): OfficeTask {
     detail: event.detail ?? 'Nueva tarea entrando en la oficina.',
   };
   if (event.type === 'task.created') return { ...base, title: event.title, kind: event.kind, owner: 'entrada', status: 'esperando', detail: event.detail ?? 'Nueva tarea entrando por recepción.', fromOwner: undefined, reactingOwner: undefined, pauseLabel: undefined };
-  if (event.type === 'task.assigned_to_vera') return { ...base, title: event.title, kind: event.kind, fromOwner: base.owner, reactingOwner: 'vera', owner: 'vera', status: 'trabajando', pauseLabel: base.owner === 'entrada' ? 'leyendo / tecleando…' : 'clasificando…', visualPhase: base.owner === 'entrada' ? 'entradaWork' : base.visualPhase, detail: event.detail ?? 'Vera se sienta en el puesto de entrada y lee/teclea la tarea.' };
-  if (event.type === 'task.assigned_to_cris') return { ...base, title: event.title, kind: event.kind, fromOwner: base.owner, reactingOwner: 'cris', owner: 'cris', status: 'trabajando', pauseLabel: base.owner === 'entrada' ? 'leyendo / tecleando…' : 'diagnosticando…', visualPhase: base.owner === 'entrada' ? 'entradaWork' : base.visualPhase, detail: event.detail ?? 'Cris se sienta en el puesto de entrada y lee/teclea la tarea.' };
+  if (event.type === 'task.assigned_to_vera') return { ...base, title: event.title, kind: event.kind, fromOwner: base.owner, reactingOwner: 'vera', owner: 'vera', status: 'trabajando', pauseLabel: base.owner === 'entrada' ? 'leyendo / tecleando…' : 'clasificando…', visualPhase: base.owner === 'entrada' ? 'entradaWork' : base.visualPhase, detail: event.detail ?? 'El agente A se sienta en el puesto de entrada y lee/teclea la tarea.' };
+  if (event.type === 'task.assigned_to_cris') return { ...base, title: event.title, kind: event.kind, fromOwner: base.owner, reactingOwner: 'cris', owner: 'cris', status: 'trabajando', pauseLabel: base.owner === 'entrada' ? 'leyendo / tecleando…' : 'diagnosticando…', visualPhase: base.owner === 'entrada' ? 'entradaWork' : base.visualPhase, detail: event.detail ?? 'El agente B se sienta en el puesto de entrada y lee/teclea la tarea.' };
   if (event.type === 'task.working') return { ...base, title: event.title, kind: event.kind, reactingOwner: base.owner, status: 'trabajando', pauseLabel: 'trabajando…', detail: event.detail ?? 'La tarea está en curso.' };
   if (event.type === 'task.blocked') return { ...base, title: event.title, kind: 'decision', fromOwner: base.owner, reactingOwner: 'decision', owner: 'decision', status: 'bloqueado', pauseLabel: 'necesita decisión', detail: event.detail ?? 'Bloqueado: necesita decisión humana.' };
   return { ...base, title: event.title, kind: event.kind, reactingOwner: base.owner, status: 'resuelto', pauseLabel: 'resuelto', detail: event.detail ?? 'Tarea resuelta.' };
@@ -425,8 +425,8 @@ function describeOfficeEvent(event: OfficeEvent, source: OfficeEventSource) {
   const prefix = source === 'simulator' ? 'Sim' : source.toUpperCase();
   const labels: Record<OfficeEventType, string> = {
     'task.created': 'entra tarea',
-    'task.assigned_to_vera': 'Vera clasifica',
-    'task.assigned_to_cris': 'Cris trabaja',
+    'task.assigned_to_vera': 'Agente A clasifica',
+    'task.assigned_to_cris': 'Agente B trabaja',
     'task.working': 'trabajo en curso',
     'task.blocked': 'necesita decisión',
     'task.resolved': 'resuelta',
@@ -692,7 +692,7 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
           }
         }
 
-        // Functional zones from the reference: large Vera operations, system room, Cris/decision room.
+        // Functional zones from the reference: agent A operations, system room, agent B/decision room.
         ctx.fillStyle = '#8f6332';
         ctx.fillRect(TILE, TILE, 11 * TILE, 13 * TILE);
         ctx.fillStyle = '#d7d2c7';
@@ -721,7 +721,7 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
         ctx.fillStyle = '#394a64';
         ctx.fillRect(12 * TILE, 6 * TILE, TILE, 4 * TILE); // vertical doorway / shared passage
         ctx.fillRect(13 * TILE, 6 * TILE, 2 * TILE, TILE); // doorway to system room
-        ctx.fillRect(18 * TILE, 6 * TILE, 2 * TILE, TILE); // doorway to Cris/decision room
+        ctx.fillRect(18 * TILE, 6 * TILE, 2 * TILE, TILE); // doorway to agent B/decision room
 
         const hasBlockedTask = tasks.some((task) => task.status === 'bloqueado' || task.owner === 'decision');
         const hasIncomingTask = tasks.some((task) => task.owner === 'entrada');
@@ -765,9 +765,9 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
           ctx.fillStyle = color;
           ctx.fillText(text, x, y);
         };
-        label('Vera recibe', TILE * 1.7, TILE * 2.05, '#fff2cf');
+        label('Agente A recibe', TILE * 1.7, TILE * 2.05, '#fff2cf');
         label(hasIncomingTask ? 'Entra tarea' : 'Entrada', TILE * 13.5, TILE * 2.05, hasIncomingTask ? '#10151f' : '#243047', hasIncomingTask, hasIncomingTask ? '#ffd866' : undefined);
-        label('Cris trabaja', TILE * 13.6, TILE * 8.05, '#d8f1ff');
+        label('Agente B trabaja', TILE * 13.6, TILE * 8.05, '#d8f1ff');
         label(hasBlockedTask ? 'BLOQUEO · DECISIÓN' : 'Decisiones', TILE * 19.1, TILE * 8.05, hasBlockedTask ? '#ffffff' : '#ffe0e0', hasBlockedTask, hasBlockedTask ? '#d94141' : undefined);
 
         const drawFurniture = (img: HTMLImageElement, tile: Tile, w = TILE * 1.5, h = TILE, yOffset = 0) => {
@@ -799,11 +799,11 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
           ctx.fillStyle = selectedElement === 'erase' ? 'rgba(255,93,93,.18)' : 'rgba(86,211,100,.12)';
           ctx.fillRect(TILE, TILE, (layout.cols - 2) * TILE, (layout.rows - 2) * TILE);
           const anchorMeta: Array<{ id: AnchorId; label: string; color: string }> = [
-            { id: 'whatsappArrival', label: 'Llega WhatsApp', color: '#ffd866' },
+            { id: 'whatsappArrival', label: 'Llega mensaje', color: '#ffd866' },
             { id: 'entradaWork', label: 'Leer / teclear', color: '#ffef9f' },
-            { id: 'veraWork', label: 'Trabaja Vera', color: '#8dd7ff' },
-            { id: 'crisWork', label: 'Trabaja Cris', color: '#ffca7a' },
-            { id: 'veraToCris', label: 'Entrega Vera→Cris', color: '#c7a6ff' },
+            { id: 'veraWork', label: 'Trabaja agente A', color: '#8dd7ff' },
+            { id: 'crisWork', label: 'Trabaja agente B', color: '#ffca7a' },
+            { id: 'veraToCris', label: 'Entrega A→B', color: '#c7a6ff' },
             { id: 'decision', label: 'Decisiones', color: '#ff8a8a' },
           ];
           anchorMeta.forEach((anchor) => {
@@ -883,9 +883,9 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
             if (mainTask.visualPhase === 'veraToEntrada') return 'recogiendo';
             if (mainTask.visualPhase === 'entradaWork' && mainTask.owner === 'vera') return veraWalking ? 'sentándose' : 'leyendo / tecleando';
             if (mainTask.visualPhase === 'veraToDesk') return veraWalking ? 'volviendo a mesa' : 'clasificando';
-            if (mainTask.visualPhase === 'veraToCris' || mainTask.visualPhase === 'transferToCris') return veraWalking ? 'llevando a Cris' : 'entregando';
+            if (mainTask.visualPhase === 'veraToCris' || mainTask.visualPhase === 'transferToCris') return veraWalking ? 'llevando a agente B' : 'entregando';
             if (agentTask?.fromOwner === 'entrada' || agentTask?.owner === 'entrada') return veraWalking ? 'recogiendo' : 'clasificando';
-            if (agentTask?.fromOwner === 'vera' || agentTask?.reactingOwner === 'cris' || mainTask.fromOwner === 'vera') return veraWalking ? 'llevando a Cris' : 'derivando';
+            if (agentTask?.fromOwner === 'vera' || agentTask?.reactingOwner === 'cris' || mainTask.fromOwner === 'vera') return veraWalking ? 'llevando a agente B' : 'derivando';
             if (agentTask?.status === 'resuelto') return 'resuelto';
             if (veraWalking) return 'moviéndose';
             if (agentTask?.pauseLabel) return agentTask.pauseLabel.replace('…', '');
@@ -962,7 +962,7 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
           taskMotionRef.current[task.id] = motion;
           if (role === 'transfer' && task.visualPhase === 'transferToCris' && !motion.moving) emitVisualPhaseComplete('transferToCris', task.id);
           const anim = { point: motion.point, dir: 'down' as Direction, moving: motion.moving };
-          const badge = task.status === 'resuelto' ? '✓ OK' : task.status === 'bloqueado' ? '⚠ DECIDE' : role === 'transfer' ? '→ Cris' : task.status === 'trabajando' ? 'WORK' : task.kind === 'bug' ? 'BUG' : task.kind === 'email' ? 'MAIL' : 'WA';
+          const badge = task.status === 'resuelto' ? '✓ OK' : task.status === 'bloqueado' ? '⚠ DECIDE' : role === 'transfer' ? '→ B' : task.status === 'trabajando' ? 'WORK' : task.kind === 'bug' ? 'BUG' : task.kind === 'email' ? 'MAIL' : 'WA';
           const badgeW = role === 'floating' ? 44 : role === 'transfer' ? 52 : task.status === 'bloqueado' ? 72 : task.status === 'resuelto' ? 54 : 42;
           const badgeH = role === 'floating' || role === 'transfer' ? 20 : 26;
           ctx.fillStyle = 'rgba(0,0,0,.18)';
@@ -1041,8 +1041,8 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
           ctx.fillText(text, point.x, point.y - 56);
           ctx.textAlign = 'start';
         };
-        nameTag('Vera', veraAnim.point, '#8dd7ff', veraHumanLabel);
-        nameTag('Cris', crisAnim.point, crisState === 'blocked' ? '#ff8a8a' : '#ffca7a', crisHumanLabel);
+        nameTag('Agent A', veraAnim.point, '#8dd7ff', veraHumanLabel);
+        nameTag('Agent B', crisAnim.point, crisState === 'blocked' ? '#ff8a8a' : '#ffca7a', crisHumanLabel);
 
         raf = requestAnimationFrame(draw);
       };
@@ -1349,9 +1349,9 @@ function App() {
           entrada.status = 'trabajando';
           entrada.reactingOwner = 'vera';
           entrada.pauseLabel = 'clasificando…';
-          entrada.detail = 'Vera recoge una tarea de la cola de entrada.';
+          entrada.detail = 'El agente A recoge una tarea de la cola de entrada.';
           entrada.updatedAt = now;
-          notes.push({ id: now + 1, text: `Vera toma: ${entrada.title}`, status: 'trabajando', at: nowTime() });
+          notes.push({ id: now + 1, text: `Agente A toma: ${entrada.title}`, status: 'trabajando', at: nowTime() });
         }
 
         const veraTask = next.find((task) => task.owner === 'vera' && task.status === 'trabajando' && now - (task.updatedAt ?? now) > 4200);
@@ -1361,18 +1361,18 @@ function App() {
             veraTask.status = 'resuelto';
             veraTask.reactingOwner = 'vera';
             veraTask.pauseLabel = 'resuelto';
-            veraTask.detail = 'Vera resolvió la tarea sin derivarla.';
+            veraTask.detail = 'El agente A resolvió la tarea sin derivarla.';
             veraTask.updatedAt = now;
-            notes.push({ id: now + 2, text: `Vera resuelve: ${veraTask.title}`, status: 'resuelto' as TaskStatus, at: nowTime() });
+            notes.push({ id: now + 2, text: `Agente A resuelve: ${veraTask.title}`, status: 'resuelto' as TaskStatus, at: nowTime() });
           } else if (!crisBusy) {
             veraTask.fromOwner = 'vera';
             veraTask.owner = 'cris';
             veraTask.status = 'trabajando';
             veraTask.reactingOwner = 'cris';
             veraTask.pauseLabel = 'diagnosticando…';
-            veraTask.detail = 'Vera deriva la tarea a Cris.';
+            veraTask.detail = 'El agente A deriva la tarea al agente B.';
             veraTask.updatedAt = now;
-            notes.push({ id: now + 3, text: `Vera deriva a Cris: ${veraTask.title}`, status: 'trabajando', at: nowTime() });
+            notes.push({ id: now + 3, text: `Agente A deriva a agente B: ${veraTask.title}`, status: 'trabajando', at: nowTime() });
           }
         }
 
@@ -1385,9 +1385,9 @@ function App() {
           crisTask.kind = blocked ? 'decision' : crisTask.kind;
           crisTask.reactingOwner = blocked ? 'decision' : 'cris';
           crisTask.pauseLabel = blocked ? 'necesita decisión' : 'resuelto';
-          crisTask.detail = blocked ? 'Cris necesita decisión humana para continuar.' : 'Cris resolvió la tarea.';
+          crisTask.detail = blocked ? 'El agente B necesita decisión humana para continuar.' : 'El agente B resolvió la tarea.';
           crisTask.updatedAt = now;
-          notes.push({ id: now + 4, text: blocked ? `Cris bloquea: ${crisTask.title}` : `Cris resuelve: ${crisTask.title}`, status: crisTask.status, at: nowTime() });
+          notes.push({ id: now + 4, text: blocked ? `Agente B bloquea: ${crisTask.title}` : `Agente B resuelve: ${crisTask.title}`, status: crisTask.status, at: nowTime() });
         }
 
         next = next.filter((task) => task.status !== 'resuelto' || now - (task.updatedAt ?? now) < 9000).slice(-8);
@@ -1455,7 +1455,7 @@ function App() {
     cleanDemoTaskIdRef.current = id;
     const title = inbound?.type === 'whatsapp.received' ? 'WhatsApp real' : 'Evento oficina';
     const assignee: AgentId = inbound?.target === 'cris' ? 'cris' : 'vera';
-    const assigneeName = assignee === 'cris' ? 'Cris' : 'Vera';
+    const assigneeName = assignee === 'cris' ? 'Agent B' : 'Agent A';
     cleanDemoQueueRef.current = [
       { task: { id, title, kind: 'whatsapp', status: 'esperando', owner: 'entrada', detail: 'Entra WhatsApp real junto al ordenador de entrada.' }, durationMs: 500 },
       { task: { id, title, kind: 'whatsapp', status: 'esperando', owner: 'entrada', reactingOwner: assignee, pauseLabel: 'recogiendo…', visualPhase: 'toWhatsappArrival', detail: `${assigneeName} va al punto donde llegó el WhatsApp.` }, waitFor: 'toWhatsappArrival' },
@@ -1491,11 +1491,11 @@ function App() {
     const id = Date.now();
     const flow: OfficeTask[] = [
       { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'esperando', owner: 'entrada', detail: 'Entra un WhatsApp nuevo por recepción.' },
-      { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'trabajando', fromOwner: 'entrada', reactingOwner: 'vera', pauseLabel: 'clasificando…', owner: 'vera', detail: 'Vera recoge el WhatsApp y lo clasifica.' },
-      { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'trabajando', fromOwner: 'vera', reactingOwner: 'cris', pauseLabel: 'diagnosticando…', owner: 'cris', detail: 'Vera lo deriva a Cris para resolución técnica.' },
-      { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'resuelto', fromOwner: 'cris', reactingOwner: 'cris', pauseLabel: 'resuelto', owner: 'cris', detail: 'Cris termina la tarea y deja tarjeta verde.' },
+      { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'trabajando', fromOwner: 'entrada', reactingOwner: 'vera', pauseLabel: 'clasificando…', owner: 'vera', detail: 'El agente A recoge el WhatsApp y lo clasifica.' },
+      { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'trabajando', fromOwner: 'vera', reactingOwner: 'cris', pauseLabel: 'diagnosticando…', owner: 'cris', detail: 'El agente A lo deriva al agente B para resolución técnica.' },
+      { id, title: 'WhatsApp automático', kind: 'whatsapp', status: 'resuelto', fromOwner: 'cris', reactingOwner: 'cris', pauseLabel: 'resuelto', owner: 'cris', detail: 'El agente B termina la tarea y deja tarjeta verde.' },
     ];
-    const notes = ['Entra WhatsApp automático en recepción', 'Vera recoge y clasifica el WhatsApp', 'Vera deriva la tarea a Cris', 'Cris resuelve y deja tarjeta verde'];
+    const notes = ['Entra WhatsApp automático en recepción', 'El agente A recoge y clasifica el WhatsApp', 'El agente A deriva la tarea al agente B', 'El agente B resuelve y deja tarjeta verde'];
     setSelectedId(id);
     flow.forEach((snapshot, step) => {
       window.setTimeout(() => {
@@ -1513,11 +1513,11 @@ function App() {
     const id = Date.now();
     const flow: OfficeTask[] = [
       { id, title: 'WhatsApp bloqueado', kind: 'whatsapp', status: 'esperando', owner: 'entrada', detail: 'Entra un WhatsApp que acabará necesitando decisión humana.' },
-      { id, title: 'WhatsApp bloqueado', kind: 'whatsapp', status: 'trabajando', fromOwner: 'entrada', reactingOwner: 'vera', pauseLabel: 'clasificando…', owner: 'vera', detail: 'Vera clasifica el mensaje y detecta que es técnico.' },
-      { id, title: 'WhatsApp bloqueado', kind: 'whatsapp', status: 'trabajando', fromOwner: 'vera', reactingOwner: 'cris', pauseLabel: 'diagnosticando…', owner: 'cris', detail: 'Cris analiza la tarea, pero falta una decisión de David.' },
-      { id, title: 'Necesita decisión', kind: 'decision', status: 'bloqueado', fromOwner: 'cris', reactingOwner: 'decision', pauseLabel: 'necesita decisión', owner: 'decision', detail: 'Bloqueado: necesita decisión de David antes de continuar.' },
+      { id, title: 'WhatsApp bloqueado', kind: 'whatsapp', status: 'trabajando', fromOwner: 'entrada', reactingOwner: 'vera', pauseLabel: 'clasificando…', owner: 'vera', detail: 'Agente A clasifica el mensaje y detecta que es técnico.' },
+      { id, title: 'WhatsApp bloqueado', kind: 'whatsapp', status: 'trabajando', fromOwner: 'vera', reactingOwner: 'cris', pauseLabel: 'diagnosticando…', owner: 'cris', detail: 'El agente B analiza la tarea, pero falta una decisión humana.' },
+      { id, title: 'Necesita decisión', kind: 'decision', status: 'bloqueado', fromOwner: 'cris', reactingOwner: 'decision', pauseLabel: 'necesita decisión', owner: 'decision', detail: 'Bloqueado: necesita decisión humana antes de continuar.' },
     ];
-    const notes = ['Entra tarea que puede bloquearse', 'Vera clasifica la tarea', 'Vera deriva a Cris', 'Cris bloquea: necesita decisión de David'];
+    const notes = ['Entra tarea que puede bloquearse', 'Agente A clasifica la tarea', 'Agente A deriva a agente B', 'Agente B bloquea: necesita decisión humana'];
     setSelectedId(id);
     flow.forEach((snapshot, step) => {
       window.setTimeout(() => {
@@ -1544,8 +1544,8 @@ function App() {
     <main className="app">
       <header className="topbar">
         <div>
-          <p className="eyebrow">Preview pixel-agents · 4402</p>
-          <h1>Oficina IA · Pixel Agents</h1>
+          <p className="eyebrow">Preview pixel-agents</p>
+          <h1>Pixel Agents Web</h1>
         </div>
         <div className="actions">
           {[1, 1.5, 2].map((scale) => (
@@ -1565,15 +1565,15 @@ function App() {
                 <strong>Librería</strong>
                 <button className={selectedElement === 'move' ? 'primary small' : 'small'} onClick={() => setSelectedElement('move')}>Mover</button>
                 <button className={selectedElement === 'erase' ? 'danger small' : 'small'} onClick={() => setSelectedElement('erase')}>Borrar</button>
-                <button className={selectedElement === 'assign:vera' ? 'primary small' : 'small'} onClick={() => setSelectedElement('assign:vera')}>PC Vera</button>
-                <button className={selectedElement === 'assign:cris' ? 'primary small' : 'small'} onClick={() => setSelectedElement('assign:cris')}>PC Cris</button>
+                <button className={selectedElement === 'assign:vera' ? 'primary small' : 'small'} onClick={() => setSelectedElement('assign:vera')}>PC agente A</button>
+                <button className={selectedElement === 'assign:cris' ? 'primary small' : 'small'} onClick={() => setSelectedElement('assign:cris')}>PC agente B</button>
                 <button className="small" onClick={() => setPlacedElements([])}>Limpiar todo</button>
                 <button className="small" onClick={resetEditorLayout}>Reset inicial</button>
               </div>
               <details className="editor-category" open>
                 <summary>Puntos</summary>
                 <div>
-                  {([['whatsappArrival', 'Llega WhatsApp'], ['entradaWork', 'Leer/teclear WA'], ['veraWork', 'Trabajo Vera'], ['crisWork', 'Trabajo Cris'], ['veraToCris', 'Entrega Vera→Cris'], ['decision', 'Decisiones']] as const).map(([id, label]) => (
+                  {([['whatsappArrival', 'Llega mensaje'], ['entradaWork', 'Leer/teclear WA'], ['veraWork', 'Trabajo agente A'], ['crisWork', 'Trabajo agente B'], ['veraToCris', 'Entrega A→B'], ['decision', 'Decisiones']] as const).map(([id, label]) => (
                     <button key={id} className={selectedElement === `anchor:${id}` ? 'primary small' : 'small'} onClick={() => setSelectedElement(`anchor:${id}`)}>{label}</button>
                   ))}
                 </div>
@@ -1596,7 +1596,7 @@ function App() {
                   </div>
                 </details>
               ))}
-              <span>Mover: arrastra elementos o personajes. Puntos coloca recuadros y flechas de orientación. PC Vera/Cris asigna un ordenador real. Puedes apilar teclado o monitor encima de una mesa.</span>
+              <span>Mover: arrastra elementos o personajes. Puntos coloca recuadros y flechas de orientación. PC agente A/B asigna un ordenador real. Puedes apilar teclado o monitor encima de una mesa.</span>
             </div>
           )}
         </div>
@@ -1616,7 +1616,7 @@ function App() {
           )}
           <hr />
           <p className="eyebrow">Lectura principal</p>
-          <p>La escena debe contar lo básico sin leer logs: entra tarea, Vera/Cris la toman, se trabaja, se bloquea o se resuelve.</p>
+          <p>La escena debe contar lo básico sin leer logs: entra una tarea, los agentes la toman, se trabaja, se bloquea o se resuelve.</p>
           <section className="legend">
             <p className="eyebrow">Leyenda</p>
             {(['esperando', 'trabajando', 'bloqueado', 'resuelto'] as TaskStatus[]).map((status) => (

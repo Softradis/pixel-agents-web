@@ -1,47 +1,33 @@
-# Control del proyecto · Oficina Familia
+# Project Notes · pixel-agents-web
 
-## Roles
+## Purpose
 
-- **Cris**: control del proyecto, prioridades, seguimiento técnico y validación de rumbo.
-- **Vera**: propone mejoras concretas, implementa cambios y deja cada avance verificable.
-- **David**: decide producto cuando haya bifurcaciones importantes o permisos de infraestructura.
+pixel-agents-web is a visual prototype for making AI assistant work understandable at a glance. It shows incoming events, task assignment, handoffs, active work, human decisions, and completion states inside a small pixel-art office.
 
-## Objetivo del MVP
+## Product goal
 
-Que en 30 segundos se entienda qué está pasando en una oficina IA viva, sin leer logs.
+In about 30 seconds, a viewer should understand:
 
-## Estado actual
+- a new item has arrived,
+- an assistant is handling it,
+- work can be handed off,
+- some tasks need a human decision,
+- completed work is visually distinct from blocked work.
 
-- Demo React/Vite + PixiJS operativa.
-- Escena 2.5D con recepción de Vera, mesa de Cris, bandeja de entrada y zona de decisiones.
-- Tareas simuladas: WhatsApp, email y bug.
-- Estados visibles: esperando, trabajando, bloqueado y resuelto.
-- Docker preparado para Backuptools en puerto `4400`.
+## Current direction
 
-## Próximas propuestas de Vera
+- React/Vite app with a canvas-based pixel office.
+- Event ingestion through `/api/events` and Server-Sent Events.
+- Editable layout for furniture, work anchors, and agent positions.
+- Demo flows for resolved and blocked work.
+- Public MIT project with documented asset sources and contribution guidelines.
 
-1. **Mejorar la escena visual**
-   - Más sensación isométrica.
-   - Caminos entre zonas.
-   - Tarjetas/objetos con movimiento.
+## Contribution priorities
 
-2. **Añadir timeline operativo**
-   - Registro simple: entra tarea, Vera clasifica, Cris trabaja, resultado.
-   - Visible sin abrir consola técnica.
+Useful contributions should improve at least one of these areas:
 
-3. **Separar modelo de eventos**
-   - Crear una capa `events` con eventos simulados.
-   - Preparar sustitución futura por WebSocket/SSE real de OpenClaw.
-
-4. **Deploy Backuptools**
-   - Cuando haya SSH o ruta operativa, desplegar en puerto `4400` sin tocar Crowpire ni CRM.
-
-## Criterio de avance
-
-Cada cambio debe cumplir al menos una de estas cosas:
-
-- hacer más entendible el estado de la oficina,
-- acercar la demo a eventos reales,
-- mejorar la sensación de oficina viva,
-- facilitar despliegue o mantenimiento.
-
+- visual clarity of the office and task states,
+- reliability of event ingestion and state transitions,
+- layout editing and export/import workflow,
+- documentation for setup, usage, and extension,
+- maintainability of assets and rendering code.

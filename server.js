@@ -85,4 +85,4 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(port, '0.0.0.0', () => console.log(`oficinaFamilia listening on :${port}`));
+server.listen(port, '0.0.0.0', () => console.log(`pixel-agents-web listening on :${port}`));

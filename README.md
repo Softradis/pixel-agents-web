@@ -1,16 +1,16 @@
 # pixel-agents-web
 
-Web visual office prototype for making AI assistant work visible: incoming WhatsApp events, task ownership, handoffs, decisions, and completion states are represented as a small pixel-art office with Vera and Cris moving between work points.
+Web visual office prototype for making AI assistant work visible: incoming messages, task ownership, handoffs, decisions, and completion states are represented as a small pixel-art office with configurable agents moving between work points.
 
-The goal is simple: instead of showing only logs or labels, the scene should make it obvious when something arrives, who is handling it, where they work, when a human decision is needed, and when the real reply has actually been sent.
+The goal is simple: instead of showing only logs or labels, the scene should make it obvious when something arrives, who is handling it, where they work, when a human decision is needed, and when the real completion event has actually happened.
 
 ## Features
 
 - React + Vite canvas-based pixel office.
 - Real event ingestion through `/api/events` using Server-Sent Events.
 - Editable office layout: furniture, agent positions, work anchors, and orientation arrows.
-- Visual work states for Vera and Cris:
-  - walk to the WhatsApp arrival point,
+- Visual work states for configurable agents:
+  - walk to the message arrival point,
   - move to the configured work point,
   - face the configured direction,
   - show typing/activity while waiting,
@@ -29,9 +29,7 @@ curl -X POST http://localhost:8080/api/events \
 
 Useful event types:
 
-- `whatsapp.received` — creates an incoming WhatsApp flow. Use `target: "vera"` or `target: "cris"`.
-- `assigned_to_vera` / `task.assigned_to_vera` — maps to the Vera WhatsApp handling flow.
-- `assigned_to_cris` / `task.assigned_to_cris` — maps to the Cris WhatsApp handling flow.
+- `whatsapp.received` — creates an incoming message flow. Use `target: "vera"` or `target: "cris"` in the current demo.
 - `whatsapp.reply_sent` — marks the current task as really completed/OK.
 
 ## Run locally
@@ -56,24 +54,24 @@ PORT=8080 node server.js
 ## Docker
 
 ```bash
-docker compose -f deploy/backuptools/docker-compose.yml up -d --build
+docker compose -f deploy/example/docker-compose.yml up -d --build
 ```
 
-The compose file maps the app to port `4400` in the current deployment, but you can adapt it for your own environment.
+The example compose file maps the app to `http://localhost:8080/`, but you can adapt it for your own environment.
 
 ## Layout editor
 
 Open the app and use **Editor elementos** to edit:
 
 - furniture and decorative elements,
-- Vera and Cris starting positions,
-- PC assignment for Vera/Cris,
+- agent starting positions,
+- PC assignment for the demo agents,
 - work anchors:
   - `Llega WhatsApp`,
   - `Leer/teclear WA`,
-  - `Trabajo Vera`,
-  - `Trabajo Cris`,
-  - `Entrega Vera→Cris`,
+  - `Trabajo agente A`,
+  - `Trabajo agente B`,
+  - `Entrega agente A→B`,
   - `Decisiones`,
 - orientation arrows for each work anchor.
 

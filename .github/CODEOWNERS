@@ -1,3 +1,6 @@
-# Require review/ownership for all changes.
-# Branch protection must enable "Require review from Code Owners" on main.
-* asistente@softradis.com
+# Replace this placeholder with your GitHub username, organization team, or public maintainer email.
+# Examples:
+# * @your-org/maintainers
+# * @your-github-user
+
+* @Softradis

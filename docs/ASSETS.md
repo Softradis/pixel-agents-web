@@ -1,89 +1,61 @@
 # Assets
 
-## Pack visual principal integrado
+This project uses a small, documented subset of visual assets to keep the repository lightweight and redistributable.
 
-- **Nombre:** Essential Isometric Living Room Pack / LivingRoom and HomeOffice
-- **Archivo recibido:** `Essential_Isometric_LivingRoom_and_HomeOffice_v1.0.0---32266401-4afb-4d5b-b95b-1fa2163ad370.rar`
+## Essential Isometric Living Room/HomeOffice
+
+- **Name:** Essential Isometric Living Room Pack / LivingRoom and HomeOffice
 - **URL:** https://oisougabo.itch.io/essential-isometric-living-office
-- **Autor:** oisougabo
-- **Licencia indicada en itch:** apto para proyectos comerciales, no comerciales y uso personal; permite modificar/reskin; crédito no obligatorio, pero apreciado.
-- **Uso en este proyecto:** subset mínimo de sprites para la preview `visual-room`.
+- **Author:** oisougabo
+- **License summary from itch.io:** suitable for commercial, non-commercial, and personal projects; modification/reskin allowed; credit not required but appreciated.
+- **Use in this project:** selected office/home-office sprites for the visual prototype.
 
-Este pack sustituye visualmente al pack Kenney en la rama `visual-room` porque trae personajes, mobiliario de oficina/casa y proporciones más cercanas a la referencia de David.
-
-## Pack anterior / fallback documentado
-
-- **Nombre:** Kenney Isometric Library Tiles
-- **Archivo verificado:** `kenney_isometricLibrary.zip`
-- **URL:** https://kenney-assets.itch.io/isometric-library-tiles
-- **Autor:** Kenney (Assets)
-- **Licencia:** Creative Commons Zero v1.0 Universal (CC0)
-- **Fecha indicada por itch:** 24 Aug 2021
-- **Uso permitido:** proyectos comerciales y no comerciales; atribución no requerida, aunque apreciada.
-
-Kenney queda documentado como pack anterior/fallback. El zip canónico no traía personajes válidos, por eso se migró la composición visual al pack Essential Isometric Living Room/HomeOffice.
-
-## Qué se usa en runtime
-
-Ruta local estándar actual:
+Runtime path:
 
 ```text
 public/assets/essential-isometric/
 ```
 
-Contenido integrado desde el RAR recibido:
+Included subset:
 
-- subset de `tiles/*.png` para suelo, paredes, puerta y ventana,
-- subset de `Home Office/*.png` para mesas, sillas, ordenador, portátil, lámpara y librerías,
-- subset de `Living Room/*.png`, `plants/*.png` y `wall Dress/*.png` para rellenar la sala,
-- `characters/mom/working/momlaptop_nocouch1.png` como sprite temporal de Vera,
-- `characters/dad/working/dadcomputerIdle1.png` como sprite temporal de Cris.
+- floor, wall, door, and window tiles,
+- desks, chairs, computer, laptop, lamp, bookshelves, and props,
+- plants and decorative objects,
+- temporary worker character sprites.
 
-No se sube el RAR completo, `.aseprite`, animaciones completas ni variantes no usadas para mantener el repo ligero.
+The full archive, source files, unused animations, and broad variants are intentionally not included.
 
-Ruta anterior Kenney:
+## Kenney Isometric Library Tiles
+
+- **Name:** Kenney Isometric Library Tiles
+- **URL:** https://kenney-assets.itch.io/isometric-library-tiles
+- **Author:** Kenney
+- **License:** Creative Commons Zero v1.0 Universal (CC0)
+- **Use in this project:** documented fallback/previous asset source and selected reusable tiles.
+
+Runtime path:
 
 ```text
 public/assets/kenney-isometric/
 ```
 
-## Uso por tipo
+## Pixel Agents reference assets
 
-- **Paredes/suelo:** `lvngroom_floor01_*`, `lvngroom_wall01_*`, puerta y ventana del pack Essential.
-- **Mobiliario:** escritorios, sillas, ordenador, portátil, librerías, rack, lámpara, plantas y props de oficina/casa.
-- **Personajes Vera/Cris:** sprites del pack Essential en actividades de trabajo. Siguen siendo representación visual temporal, no identidad definitiva.
-
-## Verificación del zip
-
-Verificado localmente contra el zip canónico descargado desde itch:
-
-- contiene carpetas `Angle/` e `Isometric/` con variantes del mismo set,
-- contiene `License.txt`, `Preview.png`, `Sample.png`, `Information.png` y accesos `.url`,
-- contiene assets de biblioteca, paredes, mobiliario y alfombras,
-- **no contiene** archivos de personajes/sprites humanos (`character`, `human`, `person`, `player`, `sprite`, etc.).
-
-## Política de integración
-
-- Usar `Essential Isometric Living Room/HomeOffice` como fuente visual principal de la rama `visual-room`.
-- Mantener la escena lo más apoyada posible en sprites reales del pack.
-- Mantener solo assets usados por el MVP o candidatos inmediatos.
-- No subir RAR, `.aseprite`, samples completos ni animaciones no usadas si no aportan al runtime.
-- No mezclar una tercera fuente sin documentar licencia y decisión previa.
-- Si un asset complica la lectura del flujo verde/rojo, no entra.
-
-## Pixel Agents prototype assets
-
-Subset copied for the experimental `pixel-agents` branch from:
+Subset copied for the pixel-agents prototype from:
 
 - Repository: https://github.com/pablodelucca/pixel-agents
 - Repository license observed: MIT (`LICENSE`, Copyright 2026 Pablo De Lucca)
-- Character source referenced by upstream: JIK-A-4 MetroCity Free Top Down Character Pack
+- Character source referenced upstream: JIK-A-4 MetroCity Free Top Down Character Pack
 - MetroCity license observed on itch.io: Creative Commons Zero v1.0 Universal (CC0)
 
 Copied subset:
 
-- `public/assets/pixel-agents/characters/vera.png`
-- `public/assets/pixel-agents/characters/cris.png`
-- selected furniture/floor sprites under `public/assets/pixel-agents/`
+- selected character sprites under `public/assets/pixel-agents/characters/`,
+- selected furniture and floor sprites under `public/assets/pixel-agents/`.
 
-Use is experimental and isolated to the `pixel-agents` branch/preview until the visual direction is validated.
+## Integration policy
+
+- Keep only assets used by the MVP or immediate editor candidates.
+- Do not commit large source archives or unused full packs.
+- Document every new third-party asset source and license before adding it.
+- Prefer small, inspectable subsets over full asset dumps.

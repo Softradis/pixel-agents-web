@@ -1,0 +1,9 @@
+services:
+  pixel-agents-web:
+    build:
+      context: ../..
+      dockerfile: deploy/example/Dockerfile
+    container_name: pixel-agents-web
+    restart: unless-stopped
+    ports:
+      - "8080:80"

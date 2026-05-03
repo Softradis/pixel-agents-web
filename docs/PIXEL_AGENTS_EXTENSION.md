@@ -1,245 +1,119 @@
 # Pixel Agents Extension
 
-## Propósito
+## Purpose
 
-`Pixel Agents` es una extensión visual para probar agentes con animación real sin sustituir ni romper la demo actual.
+The pixel-agents prototype explores animated agents inside a visual office without tying the project to a private deployment or a single internal workflow.
 
-No reemplaza `visual-room` ni cambia el flujo operativo. Añade una capa alternativa de representación de agentes.
+## Architecture principle
 
-## Principio arquitectónico
-
-Separar tres responsabilidades:
+Separate three responsibilities:
 
 1. **Layout**
-   - Define salas, paredes, muebles, zonas y coordenadas.
-   - Puede ser isométrico, top-down, pixel art o cualquier otra composición.
+   - Defines rooms, walls, furniture, zones, and coordinates.
+   - Can be isometric, top-down, pixel art, or another composition style.
 
 2. **Task flow**
-   - Mantiene la lógica actual: entrada → Vera → Cris → resuelto/bloqueado.
-   - Conserva semántica verde/rojo:
-     - verde = resuelto
-     - rojo = decisión humana
-   - No debe depender del estilo visual.
+   - Keeps a generic flow: intake → agent A → agent B → resolved/blocked.
+   - Preserves visual semantics:
+     - green = resolved,
+     - red/warning = human decision needed.
+   - Should not depend on a specific visual style.
 
 3. **Agent renderer**
-   - Decide cómo se dibuja cada agente.
-   - Puede usar:
-     - sprite estático,
-     - spritesheet animado,
-     - placeholder,
-     - pixel agent con walking real.
+   - Decides how each agent is drawn.
+   - Can use:
+     - static sprites,
+     - animated spritesheets,
+     - placeholders,
+     - pixel agents with walking animation.
 
-## Estados de agente
+## Agent states
 
-Estados mínimos:
+Minimum states:
 
-- `idle`: agente esperando o disponible.
-- `walk`: agente moviéndose hacia un destino.
-- `working`: agente ejecutando o procesando una tarea.
-- `blocked`: agente detenido porque necesita intervención humana.
+- `idle`: available or waiting.
+- `walk`: moving toward a destination.
+- `working`: processing a task.
+- `blocked`: waiting for human input.
 
-Estados opcionales más adelante:
+Optional future states:
 
-- `talking`
-- `thinking`
-- `handoff`
-- `error`
+- `talking`,
+- `thinking`,
+- `handoff`,
+- `error`.
 
-## Rama propuesta
+## Prototype scope
 
-Crear una rama separada:
+The prototype should demonstrate only the useful product idea:
 
-```text
-pixel-agents
-```
+1. Two agents are visible as pixel characters.
+2. One agent can walk from intake toward a work/handoff point.
+3. Another agent can be idle or working.
+4. A task can move through the office.
+5. Resolved and blocked states remain visually clear.
 
-Objetivo de la rama:
+Avoid adding a full game engine, unrelated asset packs, or unnecessary task logic unless it improves the visual explanation of agent work.
 
-- probar agentes pixel animados como extensión,
-- no mezclar assets ni decisiones visuales con `visual-room`,
-- mantener `main` estable.
+## Reference: pablodelucca/pixel-agents
 
-## Prototipo mínimo
-
-El primer prototipo debería demostrar solo esto:
-
-1. Vera aparece como pixel agent.
-2. Cris aparece como pixel agent.
-3. Vera puede caminar de recepción hacia pasillo/Cris.
-4. Cris puede estar `idle` o `working` en mesa.
-5. Una tarea se mueve como ahora.
-6. El flujo verde/rojo sigue igual.
-
-No incluir todavía:
-
-- sistema completo de pathfinding,
-- editor complejo,
-- compra/mezcla masiva de assets,
-- rediseño de lógica de tareas.
-
-## Pack candidato
-
-Pack observado como candidato:
-
-```text
-2D Pixel Art Modern Office Kit (16x16)
-https://joyofgaming.itch.io/2d-pixel-art-modern-office-kit-16x16
-```
-
-Motivos:
-
-- declara personaje jugable con `idle`, `walking`, `running` y otras animaciones,
-- guardia con `walking`,
-- NPCs animados,
-- tiles y muebles de oficina,
-- spritesheets/PNGs incluidos.
-
-## Cautelas de licencia
-
-Antes de usarlo como base:
-
-1. comprar/descargar legalmente el zip,
-2. revisar la licencia incluida dentro del paquete,
-3. documentar licencia/fuente en `docs/ASSETS.md`,
-4. integrar solo el subset necesario,
-5. no asumir permisos por descripción parcial de itch.io.
-
-## Criterio de aceptación
-
-La prueba `pixel-agents` se considera útil si en 30 segundos se entiende:
-
-- quién es Vera,
-- quién es Cris,
-- que los agentes se mueven de verdad,
-- que una tarea viaja entre ellos,
-- que verde sigue siendo resuelto,
-- que rojo sigue siendo decisión humana.
-
-## Decisión vigente
-
-- No comprar ni integrar assets todavía.
-- No mergear a `main`.
-- No sustituir `visual-room` por defecto.
-- Tratar `Pixel Agents` como una extensión experimental hasta que David valide el estilo.
-
-## Referencia técnica principal: pablodelucca/pixel-agents
-
-David aclaró que cuando hablaba de `Pixel Agents` se refería a:
+Reference repository:
 
 ```text
 https://github.com/pablodelucca/pixel-agents
 ```
 
-Este repo es más relevante que un pack de assets suelto porque ya implementa buena parte del modelo que queremos estudiar:
+This repository is relevant because it demonstrates:
 
-- agentes como personajes animados,
-- oficina editable,
-- estados visuales ligados a actividad,
-- layout persistente/exportable,
-- assets modulares,
-- game loop en canvas,
+- animated characters,
+- editable office layout,
+- visual states tied to activity,
+- persistent/exportable layout,
+- modular assets,
+- canvas rendering,
 - pathfinding,
-- state machine de personajes,
-- enfoque de extensión visual alrededor de agentes reales.
+- character state machines.
 
-Licencia observada en el repo: MIT. Aun así, antes de reutilizar código o assets hay que auditar:
+Observed repository license: MIT. Before reusing code or assets, audit:
 
-1. licencia del repo,
-2. licencias de assets incluidos,
-3. atribuciones requeridas,
-4. si los assets de terceros permiten redistribución/modificación,
-5. qué partes conviene usar como referencia y cuáles no.
+1. repository license,
+2. included third-party asset licenses,
+3. attribution requirements,
+4. redistribution/modification permissions,
+5. which parts should be reused and which should only be treated as reference.
 
-### Criterio de integración
+## Integration criteria
 
-No copiar encima de `visual-room`.
+Treat the pixel office as a focused prototype:
 
-Tratarlo como línea separada:
+- keep rendering decoupled from task semantics,
+- keep asset sources documented,
+- keep the demo reproducible locally,
+- avoid environment-specific deployment assumptions,
+- keep public examples neutral and understandable.
 
-```text
-pixel-agents
-```
+## Implemented MVP
 
-La rama debe estudiar arquitectura y extraer ideas, no hacer un copy-paste ciego.
+Current MVP includes:
 
-### Próximo paso recomendado
+- two animated pixel agents,
+- walking animation using spritesheet frames,
+- a top-down grid office,
+- BFS pathfinding between intake, work, handoff, and decision zones,
+- task states for resolved and blocked outcomes,
+- timeline/panel details as secondary information,
+- editable element layout with local persistence,
+- exportable JSON for `elements`, `anchors`, and `anchorDirections`.
 
-Investigar el repo en serio y decidir si `Oficina Familia` debe evolucionar hacia una arquitectura similar:
+## Layout editor
 
-- `agent renderer` desacoplado,
-- layout editor real,
-- personajes animados con rutas,
-- estados visuales conectados a eventos reales de OpenClaw,
-- soporte futuro para varios agentes.
+The editor supports:
 
-## MVP inicial aplicado
+- element placement,
+- deletion by cell,
+- clearing placed elements,
+- local browser persistence,
+- layout JSON export,
+- grouped asset categories for furniture, electronics, wall pieces, decoration, and miscellaneous objects.
 
-Rama creada:
-
-```text
-pixel-agents
-```
-
-Preview separada:
-
-```text
-http://backuptools:4402/
-```
-
-Primer MVP implementado:
-
-- Vera y Cris se renderizan como sprites pixel animados.
-- Los personajes usan frames del spritesheet para caminar/trabajar.
-- La oficina usa grid top-down por tiles.
-- Hay rutas calculadas por BFS entre recepción, Vera, Cris y decisiones.
-- Las tareas conservan el flujo existente y los estados verde/rojo.
-- `main` y `visual-room` quedan intactas.
-
-Este MVP no intenta portar toda la extensión VS Code; solo prueba si la dirección visual y técnica de `pablodelucca/pixel-agents` gana frente al enfoque isométrico.
-
-## Composición por zonas funcionales
-
-Tras revisar una referencia pixel office aportada por David, `4402` se recompuso con esta estructura:
-
-- izquierda grande: operación/recepción de Vera,
-- arriba derecha: entrada, sistema y tareas entrantes,
-- abajo derecha: oficina Cris + decisiones humanas,
-- suelos con colores distintos por función,
-- paredes formando habitaciones reales con huecos de paso,
-- escritorios alineados a grid,
-- muebles contra paredes,
-- pasillos limpios,
-- decisiones humanas como sala propia, no overlay rojo.
-
-Se mantiene el núcleo del MVP:
-
-- walking real,
-- BFS,
-- Vera/Cris animadas,
-- flujo verde/rojo,
-- timeline/panel.
-
-## Editor mínimo de elementos
-
-`pixel-agents` incorpora ahora un editor mínimo de composición en `4402`:
-
-- botón `Editor elementos`,
-- librería básica: mesa, silla, PC, planta, pizarra y mesa decisión,
-- click en el grid para colocar,
-- modo borrar por celda,
-- limpiar elementos colocados,
-- persistencia local en navegador,
-- botón `Copiar layout` para exportar JSON.
-
-Esto es el primer paso hacia una librería editable real. El objetivo es que David pueda montar la oficina visualmente antes de congelar un layout base.
-
-## Librería ampliada de assets
-
-El editor de `pixel-agents` ya carga la librería ampliada del repo de referencia:
-
-- 25 familias de muebles/objetos, expandidas en variantes útiles de frente/lateral/trasera cuando existen,
-- 9 suelos copiados al proyecto para fases posteriores,
-- 6 personajes copiados al proyecto para fases posteriores,
-- catálogo agrupable por categoría: mesas, sillas, pared, decoración, electrónica y varios.
-
-La edición actual coloca muebles/objetos sobre el grid y exporta JSON. Suelos/personajes están preparados como assets locales, pero la edición visual de capas de suelo/personajes queda para la siguiente fase.
+This keeps the project useful as a visual workflow prototype while leaving room for future integrations with real assistant events.
