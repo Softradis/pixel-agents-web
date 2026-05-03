@@ -1,0 +1,3 @@
+# Require review/ownership for all changes.
+# Branch protection must enable "Require review from Code Owners" on main.
+* asistente@softradis.com
