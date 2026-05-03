@@ -1,110 +1,94 @@
-# Oficina IA · Vera & Cris
+# Oficina Familia
 
-Demo operativa en perspectiva isométrica/2.5D para visualizar tareas de asistentes IA como una oficina viva.
+Visual office prototype for making AI assistant work visible: incoming WhatsApp events, task ownership, handoffs, decisions, and completion states are represented as a small pixel-art office with Vera and Cris moving between work points.
 
-URL desplegada en Backuptools:
+The goal is simple: instead of showing only logs or labels, the scene should make it obvious when something arrives, who is handling it, where they work, when a human decision is needed, and when the real reply has actually been sent.
 
-```text
-http://backuptools:4400/
+## Features
+
+- React + Vite canvas-based pixel office.
+- Real event ingestion through `/api/events` using Server-Sent Events.
+- Editable office layout: furniture, agent positions, work anchors, and orientation arrows.
+- Visual work states for Vera and Cris:
+  - walk to the WhatsApp arrival point,
+  - move to the configured work point,
+  - face the configured direction,
+  - show typing/activity while waiting,
+  - show OK only after a real `whatsapp.reply_sent` event.
+- Debug tracing for event boundaries: SSE, mapping, tasks, agents, and rendering.
+
+## Event API
+
+Start the app and POST events to `/api/events`:
+
+```bash
+curl -X POST http://localhost:8080/api/events \
+  -H 'Content-Type: application/json' \
+  --data '{"type":"whatsapp.received","id":1,"text":"hello","target":"vera"}'
 ```
 
-## Qué demuestra
+Useful event types:
 
-La demo convierte eventos abstractos en una escena visual:
+- `whatsapp.received` — creates an incoming WhatsApp flow. Use `target: "vera"` or `target: "cris"`.
+- `assigned_to_vera` / `task.assigned_to_vera` — maps to the Vera WhatsApp handling flow.
+- `assigned_to_cris` / `task.assigned_to_cris` — maps to the Cris WhatsApp handling flow.
+- `whatsapp.reply_sent` — marks the current task as really completed/OK.
 
-- Vera recibe y clasifica tareas.
-- Cris resuelve tareas técnicas.
-- David aparece como zona de decisión cuando algo se bloquea.
-- Verde significa resuelto.
-- Rojo significa que necesita decisión humana.
-- El timeline resume lo ocurrido sin obligar a leer logs.
-
-## MVP validado
-
-- Recepción de Vera.
-- Mesa técnica de Cris.
-- Bandeja de entrada.
-- Zona de decisiones humanas de David.
-- Tareas como objetos físicos: WhatsApp, bug, resuelto, decisión.
-- Estados: esperando, trabajando, bloqueado, resuelto.
-- Flujos simulados verde y rojo.
-- Movimiento visual de tareas entre zonas.
-- Reacción simple de Vera/Cris.
-- Assets Kenney CC0 integrados de forma ligera.
-
-## Demo script
-
-### 1. Flujo verde: tarea resuelta
-
-1. Abrir `http://backuptools:4400/`.
-2. Pulsar `Simular flujo WhatsApp`.
-3. Debe verse:
-   - entra una tarea en `Entrada`,
-   - Vera reacciona y clasifica,
-   - la tarea viaja a Cris,
-   - Cris trabaja,
-   - termina en verde como resuelta,
-   - el timeline cuenta los pasos.
-
-### 2. Flujo rojo: necesita decisión
-
-1. Pulsar `Simular flujo bloqueado`.
-2. Debe verse:
-   - entra una tarea,
-   - Vera la clasifica,
-   - Cris la analiza,
-   - la tarea viaja a `Decisiones`,
-   - queda roja con `Necesita decisión`,
-   - la zona de David queda destacada.
-
-### 3. Lectura rápida esperada
-
-En 30 segundos debería entenderse:
-
-- qué está entrando,
-- quién lo gestiona,
-- si terminó bien,
-- si quedó bloqueado,
-- qué necesita intervención humana.
-
-## Ejecutar local
+## Run locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Build
+Build:
 
 ```bash
 npm run build
 ```
 
-## Despliegue Backuptools
+Run the small static/SSE server after building:
 
-Puerto actual: `4400`.
+```bash
+PORT=8080 node server.js
+```
+
+## Docker
 
 ```bash
 docker compose -f deploy/backuptools/docker-compose.yml up -d --build
 ```
 
-Nota operativa: el despliegue actual en Backuptools sirve la build estática en un contenedor nginx aislado en `4400`, sin tocar Crowpire ni CRM.
+The compose file maps the app to port `4400` in the current deployment, but you can adapt it for your own environment.
 
-## Assets
+## Layout editor
 
-Ver `docs/ASSETS.md`.
+Open the app and use **Editor elementos** to edit:
 
-Fuente principal:
+- furniture and decorative elements,
+- Vera and Cris starting positions,
+- PC assignment for Vera/Cris,
+- work anchors:
+  - `Llega WhatsApp`,
+  - `Leer/teclear WA`,
+  - `Trabajo Vera`,
+  - `Trabajo Cris`,
+  - `Entrega Vera→Cris`,
+  - `Decisiones`,
+- orientation arrows for each work anchor.
 
-- Kenney Isometric Miniature Library
-- Licencia: CC0
-- Ruta local: `public/assets/kenney-isometric/`
+Use **Copiar layout** to export the current `elements`, `anchors`, and `anchorDirections` JSON.
 
-## Siguiente fase propuesta
+## Credits
 
-Después de esta demo presentable:
+This project uses and adapts pixel-art ideas/assets inspired by:
 
-1. Sustituir personajes placeholder por sprites más reconocibles.
-2. Mejorar tareas como objetos visuales específicos.
-3. Preparar una capa de eventos simulados más limpia.
-4. Más adelante, conectar eventos reales de OpenClaw por WebSocket/SSE.
+- [`pablodelucca/pixel-agents`](https://github.com/pablodelucca/pixel-agents)
+
+Thank you to the original author for making that work available.
+
+Additional local assets may include generated or hand-edited sprites and furniture used for this prototype.
+
+## License
+
+MIT. See [`LICENSE`](./LICENSE).

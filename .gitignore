@@ -6,3 +6,6 @@ dist/
 !.env.example
 .DS_Store
 npm-debug.log*
+
+# Local sprite edit backups
+public/assets/pixel-agents/characters/.backup/
