@@ -574,7 +574,10 @@ function usePixelOffice(canvasRef: React.RefObject<HTMLCanvasElement | null>, ta
       canvas.style.height = `${sceneH * viewScale}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const activeOwners = new Set(tasks.flatMap((task) => [task.reactingOwner, task.status === 'trabajando' || task.status === 'bloqueado' ? task.owner : undefined]).filter(Boolean) as Owner[]);
+      const activeOwners = new Set(tasks.flatMap((task) => [
+        task.status === 'trabajando' || task.status === 'bloqueado' ? task.reactingOwner : undefined,
+        task.status === 'trabajando' || task.status === 'bloqueado' ? task.owner : undefined,
+      ]).filter(Boolean) as Owner[]);
       const mainTask = tasks.find((task) => task.id === selectedId) ?? tasks[0] ?? { id: 0, title: 'Sin tarea', kind: 'whatsapp' as const, status: 'esperando' as const, owner: 'entrada' as const, detail: 'Esperando eventos reales.' };
       const veraWorkAnchor = workAnchorFromComputer('vera');
       const crisWorkAnchor = workAnchorFromComputer('cris');
@@ -1476,7 +1479,6 @@ function App() {
         kind: existing?.kind ?? 'whatsapp',
         status: 'resuelto',
         owner: existing?.owner === 'cris' ? 'cris' : 'vera',
-        reactingOwner: existing?.owner === 'cris' ? 'cris' : 'vera',
         pauseLabel: 'respuesta enviada',
         detail: 'Respuesta enviada en WhatsApp. Ahora sí queda marcado como OK.',
       };
