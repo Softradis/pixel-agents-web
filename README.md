@@ -13,7 +13,7 @@
 
 **A visual dashboard for AI agents:** arrivals, ownership, handoffs, decisions, active work, and real completion events shown inside a small pixel-art office.
 
-Instead of watching logs and guessing what an agent is doing, pixel-agents-web makes the workflow visible: a message arrives, an agent moves to it, work is assigned, a handoff can happen, a human decision may be needed, and the task only turns OK after a real completion event.
+Instead of watching logs, you can see work move through the room: a message arrives, an agent moves to it, work is assigned, a handoff can happen, a human decision may be needed, and the task only turns OK after a real `reply_sent`/completed event.
 
 > Live demo: coming soon. For now, run it locally in under a minute.
 
@@ -21,7 +21,7 @@ Instead of watching logs and guessing what an agent is doing, pixel-agents-web m
 
 AI assistants and automations often feel invisible. They receive events, classify tasks, hand work off, wait for humans, and send replies, but most systems only expose that as logs.
 
-pixel-agents-web explores a more readable metaphor: a tiny office where agent work becomes visible at a glance.
+pixel-agents-web explores a more readable metaphor: a tiny office where agent work becomes visible at a glance. The visual layer should represent reality, not invent resolution.
 
 ## Use cases
 
@@ -41,7 +41,7 @@ pixel-agents-web explores a more readable metaphor: a tiny office where agent wo
   - move to the configured work point,
   - face the configured direction,
   - show typing/activity while waiting,
-  - show OK only after a real `whatsapp.reply_sent` event.
+  - show OK only after a real `whatsapp.reply_sent`/completed event.
 - Debug tracing for event boundaries: SSE, mapping, tasks, agents, and rendering.
 
 ## Quick start

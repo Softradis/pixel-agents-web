@@ -36,7 +36,7 @@ Do these first:
 ```text
 I’m building pixel-agents-web: a visual dashboard where AI agents move through a small pixel office as work happens.
 
-Incoming messages, ownership, handoffs, human decisions, and real completion events become visible instead of being buried in logs.
+Instead of watching logs, you can see work move through the room: incoming messages, ownership, handoffs, human decisions, and real completion events.
 
 MIT repo: https://github.com/Softradis/pixel-agents-web
 ```
@@ -52,7 +52,7 @@ The idea is simple: when agents handle real work, logs are not enough. A small p
 • an agent picks it up
 • work is handed off
 • a human decision is needed
-• a real completion event marks it done
+• OK appears only after a real `reply_sent`/completed event
 
 It currently runs as a React/Vite prototype with Server-Sent Events and an editable office layout.
 
@@ -65,7 +65,7 @@ https://github.com/Softradis/pixel-agents-web
 ```text
 Show HN: pixel-agents-web – a pixel-art dashboard for visualizing AI agent workflows
 
-I’m building a small visual dashboard that shows AI agent work as a pixel office. Instead of only reading logs, you can see arrivals, ownership, handoffs, human decisions, active work, and completion events.
+I’m building a small visual dashboard that shows AI agent work as a pixel office. Instead of watching logs, you can see work move through the room: arrivals, ownership, handoffs, human decisions, active work, and completion events. The visual layer should represent reality, not invent resolution.
 
 It is an MIT React/Vite prototype with an event API and Server-Sent Events.
 
